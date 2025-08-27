@@ -17,12 +17,16 @@ const People = ({ user, addNotification }) => {
   }, []);
 
   useEffect(() => {
-    const filtered = users.filter(user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    let filtered = users.filter(user =>
+      (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       user.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (roleFilter === '' || user.role === roleFilter) &&
+      (statusFilter === '' ||
+        (statusFilter === 'active' && !user.suspended) ||
+        (statusFilter === 'suspended' && user.suspended))
     );
     setFilteredUsers(filtered);
-  }, [searchTerm, users]);
+  }, [searchTerm, roleFilter, statusFilter, users]);
 
   const fetchUsers = async () => {
     try {
