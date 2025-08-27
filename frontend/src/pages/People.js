@@ -278,6 +278,19 @@ const People = ({ user, addNotification }) => {
                     {user.role}
                   </div>
                 </div>
+                <div className="list-column organizations-column">
+                  <div className="organization-list-inline">
+                    {user.organizationList && user.organizationList.length > 0 ? (
+                      user.organizationList.map((org, index) => (
+                        <span key={org.id} className="organization-tag-small">
+                          {org.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="no-organizations-small">None</span>
+                    )}
+                  </div>
+                </div>
                 <div className="list-column activity-column">
                   {getRelativeTime(user.last_active)}
                 </div>
