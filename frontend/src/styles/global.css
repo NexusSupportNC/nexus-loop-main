@@ -3588,6 +3588,7 @@ tr:hover {
     padding: 16px 20px;
   }
 
+  .organizations-column,
   .activity-column,
   .joined-column {
     display: none;
