@@ -3892,6 +3892,59 @@ tr:hover {
   font-weight: 500;
 }
 
+/* Organization display styles */
+.organization-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.organization-tag {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.organization-list-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.organization-tag-small {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.no-organizations,
+.no-organizations-small {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.75rem;
+}
+
+.no-organizations-small {
+  font-size: 0.6875rem;
+}
+
+.organizations-column {
+  max-width: 150px;
+  overflow: hidden;
+}
+
 /* Responsive styles for modal */
 @media (max-width: 768px) {
   .modal-container {
