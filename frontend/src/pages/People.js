@@ -250,6 +250,7 @@ const People = ({ user, addNotification }) => {
           <div className="people-list-header">
             <div className="list-column">User</div>
             <div className="list-column">Role</div>
+            <div className="list-column">Organizations</div>
             <div className="list-column">Last Activity</div>
             <div className="list-column">Joined</div>
             <div className="list-column">Status</div>
