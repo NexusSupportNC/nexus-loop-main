@@ -1,4 +1,5 @@
 const User = require('../models/userModel');
+const Organization = require('../models/organizationModel');
 
 const peopleController = {
   // Get all users with search functionality
