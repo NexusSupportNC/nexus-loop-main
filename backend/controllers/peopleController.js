@@ -44,13 +44,18 @@ const peopleController = {
     try {
       const { id } = req.params;
       const user = User.findById(id);
-      
+
       if (!user) {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
-      
+
+      // Get user's organizations
+      const organizations = Organization.getOrganizationsForUser(id);
+
       // Remove password from response
       const { password, ...safeUser } = user;
+      safeUser.organizationList = organizations;
+
       res.json({ success: true, user: safeUser });
     } catch (error) {
       console.error('Error fetching user:', error);
