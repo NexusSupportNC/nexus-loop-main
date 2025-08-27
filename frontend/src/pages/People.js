@@ -58,6 +58,11 @@ const People = ({ user, addNotification }) => {
     return role === 'admin' ? 'role-badge admin' : 'role-badge agent';
   };
 
+  const handleCreateOrganization = () => {
+    // TODO: Implement organization creation logic
+    addNotification('Organization creation feature coming soon!', 'info');
+  };
+
   if (loading) return <div className="loading-container"><div className="loading-spinner"></div></div>;
   if (error) return <div className="error-message">{error}</div>;
 
