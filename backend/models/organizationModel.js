@@ -144,7 +144,16 @@ module.exports = {
 
   searchUsersWithOrganizations: (searchTerm = '') => {
     if (!searchTerm) {
-      return this.getUsersWithOrganizations();
+      return db.prepare(`
+        SELECT u.id, u.name, u.email, u.role, u.last_active, u.suspended, u.created_at,
+               GROUP_CONCAT(o.name) as organizations,
+               GROUP_CONCAT(o.id) as organization_ids
+        FROM users u
+        LEFT JOIN user_organizations uo ON u.id = uo.user_id
+        LEFT JOIN organizations o ON uo.organization_id = o.id
+        GROUP BY u.id
+        ORDER BY u.last_active DESC NULLS LAST, u.name ASC
+      `).all();
     }
 
     return db.prepare(`
