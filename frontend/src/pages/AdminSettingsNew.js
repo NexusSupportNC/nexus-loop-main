@@ -50,6 +50,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
     { id: 'appearance', name: 'Appearance', icon: '🎨' },
     { id: 'notifications', name: 'Email Notifications', icon: '📧' },
     { id: 'users', name: 'User Management', icon: '👥' },
+    { id: 'organizations', name: 'Organizations', icon: '🏢' },
     { id: 'activity', name: 'Activity Logs', icon: '📊' },
     { id: 'loops', name: 'All Transaction Loops', icon: '📋' },
     { id: 'templates', name: 'Document Templates', icon: '📄' },
