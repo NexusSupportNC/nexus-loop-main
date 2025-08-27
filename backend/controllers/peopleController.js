@@ -6,14 +6,32 @@ const peopleController = {
   getUsers: async (req, res) => {
     try {
       const { search } = req.query;
-      const users = User.searchUsers(search);
-      
-      // Remove password from response
+      const users = Organization.searchUsersWithOrganizations(search);
+
+      // Remove password from response and format organization data
       const safeUsers = users.map(user => {
         const { password, ...safeUser } = user;
+
+        // Parse organization data
+        if (safeUser.organizations && safeUser.organization_ids) {
+          const orgNames = safeUser.organizations.split(',');
+          const orgIds = safeUser.organization_ids.split(',');
+
+          safeUser.organizationList = orgNames.map((name, index) => ({
+            id: parseInt(orgIds[index]),
+            name: name
+          })).filter(org => org.name); // Filter out empty names
+        } else {
+          safeUser.organizationList = [];
+        }
+
+        // Remove the raw organization fields
+        delete safeUser.organizations;
+        delete safeUser.organization_ids;
+
         return safeUser;
       });
-      
+
       res.json({ success: true, users: safeUsers });
     } catch (error) {
       console.error('Error fetching users:', error);
