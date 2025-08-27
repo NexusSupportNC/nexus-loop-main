@@ -74,21 +74,33 @@ const People = ({ user, addNotification }) => {
             <h1 className="people-title">People</h1>
             <p className="people-subtitle">View and search registered users</p>
           </div>
-          <div className="view-toggle">
-            <button
-              className={`view-toggle-btn ${viewMode === 'tiles' ? 'active' : ''}`}
-              onClick={() => setViewMode('tiles')}
-              title="Tiles view"
-            >
-              <span className="view-toggle-icon">⊞</span>
-            </button>
-            <button
-              className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setViewMode('list')}
-              title="List view"
-            >
-              <span className="view-toggle-icon">☰</span>
-            </button>
+          <div className="people-header-actions">
+            {user?.role === 'admin' && (
+              <button
+                onClick={handleCreateOrganization}
+                className="btn btn-primary create-org-btn"
+                title="Create Organization"
+              >
+                <span className="btn-icon">🏢</span>
+                Create Organization
+              </button>
+            )}
+            <div className="view-toggle">
+              <button
+                className={`view-toggle-btn ${viewMode === 'tiles' ? 'active' : ''}`}
+                onClick={() => setViewMode('tiles')}
+                title="Tiles view"
+              >
+                <span className="view-toggle-icon">⊞</span>
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+              >
+                <span className="view-toggle-icon">☰</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -103,6 +115,38 @@ const People = ({ user, addNotification }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
+        </div>
+      </div>
+
+      <div className="people-filters">
+        <div className="filter-group">
+          <label className="filter-label">Filter by Role:</label>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="agent">Agent</option>
+          </select>
+        </div>
+        <div className="filter-group">
+          <label className="filter-label">Filter by Status:</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+          </select>
+        </div>
+        <div className="filter-summary">
+          <span className="filter-result-count">
+            {filteredUsers.length} of {users.length} users
+          </span>
         </div>
       </div>
 
