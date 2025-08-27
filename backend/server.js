@@ -6,6 +6,7 @@ const loopRoutes = require('./routes/loopRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const peopleRoutes = require('./routes/peopleRoutes');
+const organizationRoutes = require('./routes/organizationRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
