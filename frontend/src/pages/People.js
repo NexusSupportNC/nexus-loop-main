@@ -61,8 +61,17 @@ const People = ({ user, addNotification }) => {
   };
 
   const handleCreateOrganization = () => {
-    // TODO: Implement organization creation logic
-    addNotification('Organization creation feature coming soon!', 'info');
+    setShowCreateModal(true);
+  };
+
+  const handleModalClose = () => {
+    setShowCreateModal(false);
+  };
+
+  const handleOrganizationCreated = (organization) => {
+    addNotification(`Organization "${organization.name}" created successfully!`, 'success');
+    // Refresh the users list to show updated organization info
+    fetchUsers();
   };
 
   if (loading) return <div className="loading-container"><div className="loading-spinner"></div></div>;
