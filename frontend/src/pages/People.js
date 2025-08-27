@@ -320,6 +320,13 @@ const People = ({ user, addNotification }) => {
           <p>Try adjusting your search terms</p>
         </div>
       )}
+
+      <CreateOrganizationModal
+        isOpen={showCreateModal}
+        onClose={handleModalClose}
+        onSuccess={handleOrganizationCreated}
+        addNotification={addNotification}
+      />
     </div>
   );
 };
