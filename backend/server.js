@@ -25,6 +25,7 @@ app.use('/api/loops', loopRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/people', peopleRoutes);
+app.use('/api/organizations', organizationRoutes);
 
 // Serve React app for any non-API routes
 app.get('*', (req, res) => {
