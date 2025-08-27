@@ -12,6 +12,7 @@ const People = ({ user, addNotification }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState('tiles'); // 'tiles' or 'list'
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchUsers();
