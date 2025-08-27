@@ -2894,6 +2894,28 @@ tr:hover {
   gap: 20px;
 }
 
+.people-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.create-org-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-icon {
+  font-size: 16px;
+}
+
 .people-header-text {
   text-align: center;
   flex: 1;
