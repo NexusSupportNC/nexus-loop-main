@@ -3529,7 +3529,7 @@ tr:hover {
 @media (max-width: 1024px) {
   .people-list-header,
   .people-list-item {
-    grid-template-columns: 2fr 1fr 1.5fr 1fr;
+    grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr;
     gap: 12px;
   }
 
