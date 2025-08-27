@@ -219,6 +219,20 @@ const People = ({ user, addNotification }) => {
                         {new Date(user.created_at).toLocaleDateString()}
                       </span>
                     </div>
+                    <div className="user-detail">
+                      <span className="detail-label">Organizations:</span>
+                      <div className="organization-list">
+                        {user.organizationList && user.organizationList.length > 0 ? (
+                          user.organizationList.map((org, index) => (
+                            <span key={org.id} className="organization-tag">
+                              {org.name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="no-organizations">No organizations</span>
+                        )}
+                      </div>
+                    </div>
                     {user.suspended && (
                       <div className="user-status suspended">
                         <span className="status-icon">⚠️</span>
@@ -272,7 +286,7 @@ const People = ({ user, addNotification }) => {
                 <div className="list-column status-column">
                   {user.suspended ? (
                     <div className="user-status suspended">
-                      <span className="status-icon">⚠️</span>
+                      <span className="status-icon">⚠���</span>
                       <span>Suspended</span>
                     </div>
                   ) : (
