@@ -68,8 +68,6 @@ const AdminSettingsNew = ({ user, addNotification }) => {
         return <SystemInformation addNotification={addNotification} />;
       case 'users':
         return <UserManagement addNotification={addNotification} />;
-      case 'organizations':
-        return <OrganizationManagement addNotification={addNotification} />;
       case 'templates':
         return <DocumentTemplates addNotification={addNotification} />;
       case 'apikeys':
@@ -1735,7 +1733,7 @@ const DataExport = ({ addNotification }) => {
                     Exporting...
                   </>
                 ) : (
-                  '��� Export'
+                  '📤 Export'
                 )}
               </button>
             </div>
@@ -3036,7 +3034,7 @@ const APIKeysManagement = ({ addNotification }) => {
                   title="Copy Secret Key"
                   type="button"
                 >
-                  📋 Copy
+                  ��� Copy
                 </button>
                 <button
                   onClick={generateSecretKey}
