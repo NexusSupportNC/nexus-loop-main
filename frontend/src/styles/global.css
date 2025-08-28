@@ -2488,6 +2488,12 @@ tr:hover {
   color: var(--text-primary);
 }
 
+.alert-danger {
+  border-color: #ef4444;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
 .alert-info {
   border-color: #3b82f6;
   background: var(--bg-secondary);
