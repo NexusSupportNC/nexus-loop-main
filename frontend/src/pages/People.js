@@ -9,13 +9,19 @@ const People = ({ user, addNotification }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [organizationFilter, setOrganizationFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState('tiles'); // 'tiles' or 'list'
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [organizations, setOrganizations] = useState([]);
+  const [activeTab, setActiveTab] = useState('users'); // 'users' or 'organizations'
+  const [showOrganizationModal, setShowOrganizationModal] = useState(false);
+  const [selectedOrganization, setSelectedOrganization] = useState(null);
 
   useEffect(() => {
     fetchUsers();
+    fetchOrganizations();
   }, []);
 
   useEffect(() => {
@@ -25,10 +31,27 @@ const People = ({ user, addNotification }) => {
       (roleFilter === '' || user.role === roleFilter) &&
       (statusFilter === '' ||
         (statusFilter === 'active' && !user.suspended) ||
-        (statusFilter === 'suspended' && user.suspended))
+        (statusFilter === 'suspended' && user.suspended)) &&
+      (organizationFilter === '' ||
+        (user.organizationList && user.organizationList.some(org => org.id.toString() === organizationFilter)))
     );
     setFilteredUsers(filtered);
-  }, [searchTerm, roleFilter, statusFilter, users]);
+  }, [searchTerm, roleFilter, statusFilter, organizationFilter, users]);
+
+  const fetchOrganizations = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/organizations', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        setOrganizations(response.data.organizations);
+      }
+    } catch (err) {
+      console.error('Error fetching organizations:', err);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -72,6 +95,19 @@ const People = ({ user, addNotification }) => {
     addNotification(`Organization "${organization.name}" created successfully!`, 'success');
     // Refresh the users list to show updated organization info
     fetchUsers();
+    fetchOrganizations();
+  };
+
+  const handleOrganizationClick = (organization) => {
+    setSelectedOrganization(organization);
+    setShowOrganizationModal(true);
+  };
+
+  const handleOrganizationModalClose = () => {
+    setShowOrganizationModal(false);
+    setSelectedOrganization(null);
+    fetchUsers();
+    fetchOrganizations();
   };
 
   if (loading) return <div className="loading-container"><div className="loading-spinner"></div></div>;
@@ -154,6 +190,19 @@ const People = ({ user, addNotification }) => {
             <option value="suspended">Suspended</option>
           </select>
         </div>
+        <div className="filter-group">
+          <label className="filter-label">Filter by Organization:</label>
+          <select
+            value={organizationFilter}
+            onChange={(e) => setOrganizationFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">All Organizations</option>
+            {organizations.map(org => (
+              <option key={org.id} value={org.id.toString()}>{org.name}</option>
+            ))}
+          </select>
+        </div>
         <div className="filter-summary">
           <span className="filter-result-count">
             {filteredUsers.length} of {users.length} users
@@ -161,6 +210,30 @@ const People = ({ user, addNotification }) => {
         </div>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="people-tabs">
+        <div className="tab-nav">
+          <button
+            className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            <span className="tab-icon">👥</span>
+            Users
+            <span className="tab-count">({filteredUsers.length})</span>
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'organizations' ? 'active' : ''}`}
+            onClick={() => setActiveTab('organizations')}
+          >
+            <span className="tab-icon">🏢</span>
+            Organizations
+            <span className="tab-count">({organizations.length})</span>
+          </button>
+        </div>
+      </div>
+
+      {activeTab === 'users' && (
+      <>
       <div className="people-stats">
         <div className="stat-card">
           <span className="stat-number">{filteredUsers.length}</span>
@@ -321,12 +394,35 @@ const People = ({ user, addNotification }) => {
         </div>
       )}
 
+      </>
+      )}
+
+      {activeTab === 'organizations' && (
+        <OrganizationsTab
+          organizations={organizations}
+          user={user}
+          onOrganizationClick={handleOrganizationClick}
+          onCreateOrganization={handleCreateOrganization}
+          addNotification={addNotification}
+        />
+      )}
+
       <CreateOrganizationModal
         isOpen={showCreateModal}
         onClose={handleModalClose}
         onSuccess={handleOrganizationCreated}
         addNotification={addNotification}
       />
+
+      {showOrganizationModal && selectedOrganization && (
+        <OrganizationModal
+          organization={selectedOrganization}
+          user={user}
+          isOpen={showOrganizationModal}
+          onClose={handleOrganizationModalClose}
+          addNotification={addNotification}
+        />
+      )}
     </div>
   );
 };
