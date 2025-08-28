@@ -153,25 +153,27 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Closing Soon */}
+        {/* Attention Required Loops */}
         <div className="card">
           <div className="card-header">
-            <h3 className="text-lg font-semibold">Loops Closing Soon</h3>
+            <h3 className="text-lg font-semibold">Loops Requiring Attention</h3>
           </div>
           <div className="card-body">
-            {closingLoops.length === 0 ? (
+            {overdueLoops.length === 0 && closingLoops.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-4xl mb-2">✅</div>
-                <p className="text-gray-600">No loops closing in the next 3 days</p>
+                <p className="text-gray-600">No loops requiring immediate attention</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {closingLoops.slice(0, 5).map((loop) => (
-                  <div key={loop.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                {/* Show overdue loops first */}
+                {overdueLoops.slice(0, 3).map((loop) => (
+                  <div key={`overdue-${loop.id}`} className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <span className="font-medium">#{loop.id}</span>
                         {getStatusBadge(loop.status)}
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-medium">OVERDUE</span>
                       </div>
                       <p className="text-sm text-gray-600 truncate">
                         {loop.property_address}
@@ -189,11 +191,35 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
                       </p>
                     </div>
                   </div>
-                ))}
-                {closingLoops.length > 5 && (
+                ))}\n                {/* Show closing soon loops */}
+                {closingLoops.slice(0, Math.max(2, 5 - overdueLoops.length)).map((loop) => (
+                  <div key={`closing-${loop.id}`} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">#{loop.id}</span>
+                        {getStatusBadge(loop.status)}
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">CLOSING SOON</span>
+                      </div>
+                      <p className="text-sm text-gray-600 truncate">
+                        {loop.property_address}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Client: {loop.client_name}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-amber-600">
+                        {dateUtils.getCountdownText(loop.end_date)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {dateUtils.formatDate(loop.end_date)}
+                      </p>
+                    </div>
+                  </div>
+                ))}\n                {(overdueLoops.length + closingLoops.length) > 5 && (
                   <div className="text-center">
                     <Link to={isAdmin ? "/dashboard/admin" : "/dashboard/agent"} className="btn btn-sm btn-outline">
-                      View all {closingLoops.length} closing loops
+                      View all {overdueLoops.length + closingLoops.length} loops requiring attention
                     </Link>
                   </div>
                 )}
