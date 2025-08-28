@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getRelativeTime, getActivityStatus } from '../utils/timeUtils';
 import CreateOrganizationModal from '../components/CreateOrganizationModal';
+import OrganizationsTab from '../components/OrganizationsTab';
+import OrganizationModal from '../components/OrganizationModal';
 
 const People = ({ user, addNotification }) => {
   const [users, setUsers] = useState([]);
