@@ -1987,6 +1987,10 @@ footer a:hover {
   gap: 16px;
 }
 
+.organization-info-full {
+  grid-column: 1 / -1;
+}
+
 .organization-info-item {
   display: flex;
   flex-direction: column;
