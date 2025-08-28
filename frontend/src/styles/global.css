@@ -2817,6 +2817,12 @@ tr:hover {
   color: #92400e;
 }
 
+.alert-danger {
+  background-color: #fecaca;
+  border-color: #f87171;
+  color: #991b1b;
+}
+
 .alert-info {
   background-color: #dbeafe;
   border-color: #bfdbfe;
