@@ -12,6 +12,7 @@ router.get('/', loopController.getLoops);
 router.post('/', uploadImages, loopController.createLoop);
 router.get('/stats', loopController.getDashboardStats);
 router.get('/closing', loopController.getClosingLoops);
+router.get('/overdue', loopController.getOverdueLoops);
 router.get('/export/csv', loopController.exportCSV);
 router.get('/:id', loopController.getLoopById);
 router.put('/:id', uploadImages, loopController.updateLoop);
