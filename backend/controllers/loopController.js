@@ -431,7 +431,9 @@ const loopController = {
 
   getClosingLoops: (req, res, next) => {
     try {
-      const closingLoops = loopModel.getClosingLoops();
+      // For non-admin users, only show their own loops
+      const userId = req.user.role === 'admin' ? null : req.user.id;
+      const closingLoops = loopModel.getClosingLoops(userId);
 
       res.json({
         success: true,
@@ -443,10 +445,28 @@ const loopController = {
     }
   },
 
+  getOverdueLoops: (req, res, next) => {
+    try {
+      // For non-admin users, only show their own loops
+      const userId = req.user.role === 'admin' ? null : req.user.id;
+      const overdueLoops = loopModel.getOverdueLoops(userId);
+
+      res.json({
+        success: true,
+        loops: overdueLoops,
+        count: overdueLoops.length
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   getDashboardStats: (req, res, next) => {
     try {
       const stats = loopModel.getLoopStats();
-      const closingLoops = loopModel.getClosingLoops();
+      // For non-admin users, only show their own loops in stats
+      const userId = req.user.role === 'admin' ? null : req.user.id;
+      const closingLoops = loopModel.getClosingLoops(userId);
 
       res.json({
         success: true,
