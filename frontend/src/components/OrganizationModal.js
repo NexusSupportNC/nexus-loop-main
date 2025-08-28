@@ -247,27 +247,28 @@ const OrganizationModal = ({ organization, user, isOpen, onClose, addNotificatio
 
         {/* Add User Modal */}
         {showAddUserModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Add User to Organization</h3>
+          <div className="add-user-modal">
+            <div className="add-user-modal-content">
+              <div className="add-user-modal-header">
+                <h3 className="add-user-modal-title">Add User to Organization</h3>
                 <button
                   onClick={() => setShowAddUserModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="add-user-modal-close"
+                  title="Close"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="add-user-form">
+                <div className="add-user-field">
+                  <label className="add-user-label">
                     Select User
                   </label>
                   <select
                     value={selectedUserId}
                     onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="add-user-select"
                   >
                     <option value="">Choose a user...</option>
                     {availableUsers.map(availableUser => (
@@ -279,14 +280,14 @@ const OrganizationModal = ({ organization, user, isOpen, onClose, addNotificatio
                 </div>
 
                 {availableUsers.length === 0 && (
-                  <div className="text-center py-4 text-gray-500">
+                  <div className="add-user-empty">
                     <p>No available users to add</p>
-                    <p className="text-sm">All users are already members of this organization</p>
+                    <p>All users are already members of this organization</p>
                   </div>
                 )}
               </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
+              <div className="add-user-actions">
                 <button
                   onClick={() => setShowAddUserModal(false)}
                   className="btn btn-outline"
