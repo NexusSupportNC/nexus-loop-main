@@ -50,7 +50,11 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
 
     } catch (error) {
       const errorMessage = apiUtils.getErrorMessage(error);
-      addNotification(errorMessage, 'error');
+      // Only show error notifications for non-network errors to prevent auto-scroll
+      if (!error.code || error.code !== 'NETWORK_ERROR') {
+        addNotification(errorMessage, 'error');
+      }
+      console.error('Dashboard data fetch error:', error);
     } finally {
       setLoading(false);
     }
