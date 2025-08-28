@@ -3665,12 +3665,14 @@ tr:hover {
   font-weight: 700;
   color: #0f172a;
   margin-bottom: 8px;
+  text-align: left;
 }
 
 .people-subtitle {
   color: #64748b;
   font-size: 1.125rem;
   margin: 0;
+  text-align: left;
 }
 
 .people-search {
