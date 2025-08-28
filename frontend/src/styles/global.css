@@ -2251,6 +2251,11 @@ footer a:hover {
     justify-content: stretch;
   }
 
+  .organizations-controls {
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .organizations-stats {
     flex-direction: column;
     gap: 12px;
@@ -2259,6 +2264,47 @@ footer a:hover {
   .organizations-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .organizations-list-header {
+    display: none;
+  }
+
+  .organizations-list-item {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .organization-column {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .list-org-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .members-column::before {
+    content: "Members: ";
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .created-column::before {
+    content: "Created: ";
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .actions-column {
+    justify-content: stretch;
+    border-top: 1px solid var(--border-primary);
+    padding-top: 12px;
+    margin-top: 12px;
   }
 
   .tab-nav {
