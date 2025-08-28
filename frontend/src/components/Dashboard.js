@@ -14,6 +14,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
     closing_soon: 0
   });
   const [closingLoops, setClosingLoops] = useState([]);
+  const [overdueLoops, setOverdueLoops] = useState([]);
   const [recentLoops, setRecentLoops] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,10 +28,18 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
         setStats(statsResponse.data.stats);
       }
 
-      // Fetch closing loops
-      const closingResponse = await loopAPI.getClosingLoops();
+      // Fetch closing loops and overdue loops
+      const [closingResponse, overdueResponse] = await Promise.all([
+        loopAPI.getClosingLoops(),
+        loopAPI.getOverdueLoops()
+      ]);
+
       if (closingResponse.data.success) {
         setClosingLoops(closingResponse.data.loops);
+      }
+
+      if (overdueResponse.data.success) {
+        setOverdueLoops(overdueResponse.data.loops);
       }
 
       // Fetch recent loops
@@ -45,11 +54,11 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
     } finally {
       setLoading(false);
     }
-  }, [addNotification]);
+  }, []);  // Remove addNotification dependency to prevent auto-scroll
 
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, []);  // Remove dependency to prevent re-renders and auto-scroll
 
   const handleExportCSV = async () => {
     try {
