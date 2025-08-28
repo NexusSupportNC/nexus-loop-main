@@ -170,18 +170,49 @@ module.exports = {
     return db.prepare('UPDATE loops SET archived = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
   },
 
-  getClosingLoops: () => {
+  getClosingLoops: (userId = null) => {
     const today = new Date().toISOString().split('T')[0];
     const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
-    return db.prepare(`
-      SELECT l.*, u.name as creator_name 
-      FROM loops l 
-      LEFT JOIN users u ON l.creator_id = u.id 
-      WHERE l.end_date BETWEEN ? AND ? 
-      AND l.status IN ('active', 'closing') 
+
+    let query = `
+      SELECT l.*, u.name as creator_name
+      FROM loops l
+      LEFT JOIN users u ON l.creator_id = u.id
+      WHERE l.end_date BETWEEN ? AND ?
+      AND l.status IN ('active', 'closing')
       AND l.archived = 0
-    `).all(today, threeDaysFromNow);
+    `;
+
+    let params = [today, threeDaysFromNow];
+
+    if (userId) {
+      query += ' AND l.creator_id = ?';
+      params.push(userId);
+    }
+
+    return db.prepare(query).all(...params);
+  },
+
+  getOverdueLoops: (userId = null) => {
+    const today = new Date().toISOString().split('T')[0];
+
+    let query = `
+      SELECT l.*, u.name as creator_name
+      FROM loops l
+      LEFT JOIN users u ON l.creator_id = u.id
+      WHERE l.end_date < ?
+      AND l.status IN ('active', 'closing')
+      AND l.archived = 0
+    `;
+
+    let params = [today];
+
+    if (userId) {
+      query += ' AND l.creator_id = ?';
+      params.push(userId);
+    }
+
+    return db.prepare(query).all(...params);
   },
 
   getLoopStats: () => {
