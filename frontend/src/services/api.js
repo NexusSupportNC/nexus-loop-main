@@ -71,6 +71,7 @@ export const loopAPI = {
   // Dashboard and stats
   getStats: () => api.get('/loops/stats'),
   getClosingLoops: () => api.get('/loops/closing'),
+  getOverdueLoops: () => api.get('/loops/overdue'),
   
   // Export functions
   exportCSV: (params = {}) => {
