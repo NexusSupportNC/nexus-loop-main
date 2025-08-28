@@ -4,7 +4,12 @@ const organizationController = {
   // Get all organizations
   getOrganizations: async (req, res) => {
     try {
-      const organizations = Organization.findAll();
+      const organizationsData = Organization.findAll();
+      // Format organizations to include userCount
+      const organizations = organizationsData.map(org => ({
+        ...org,
+        userCount: org.member_count || 0
+      }));
       res.json({ success: true, organizations });
     } catch (error) {
       console.error('Error fetching organizations:', error);
