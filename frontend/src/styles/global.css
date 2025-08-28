@@ -3680,12 +3680,19 @@ tr:hover {
 }
 
 .organizations-search {
-  margin-bottom: 24px;
+  flex: 1;
 }
 
 .users-view-controls {
   display: flex;
   justify-content: flex-end;
+  margin-bottom: 24px;
+}
+
+.organizations-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
