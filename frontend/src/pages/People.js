@@ -14,12 +14,14 @@ const People = ({ user, addNotification }) => {
   const [organizationFilter, setOrganizationFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState('tiles'); // 'tiles' or 'list'
+  const [usersViewMode, setUsersViewMode] = useState('tiles'); // 'tiles' or 'list' for users tab
+  const [organizationsViewMode, setOrganizationsViewMode] = useState('tiles'); // 'tiles' or 'list' for organizations tab
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [organizations, setOrganizations] = useState([]);
   const [activeTab, setActiveTab] = useState('users'); // 'users' or 'organizations'
   const [showOrganizationModal, setShowOrganizationModal] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState(null);
+  const [deletingOrganization, setDeletingOrganization] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -112,6 +114,31 @@ const People = ({ user, addNotification }) => {
     fetchOrganizations();
   };
 
+  const handleDeleteOrganization = async (organization) => {
+    if (!window.confirm(`Are you sure you want to delete "${organization.name}"? This will remove all user assignments and cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setDeletingOrganization(organization.id);
+      const token = localStorage.getItem('token');
+      const response = await axios.delete(`/api/organizations/${organization.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        addNotification(`Organization "${organization.name}" deleted successfully`, 'success');
+        fetchOrganizations();
+        fetchUsers();
+      }
+    } catch (err) {
+      console.error('Error deleting organization:', err);
+      addNotification('Error deleting organization', 'error');
+    } finally {
+      setDeletingOrganization(null);
+    }
+  };
+
   if (loading) return <div className="loading-container"><div className="loading-spinner"></div></div>;
   if (error) return <div className="error-message">{error}</div>;
 
@@ -134,22 +161,6 @@ const People = ({ user, addNotification }) => {
                 Create Organization
               </button>
             )}
-            <div className="view-toggle">
-              <button
-                className={`view-toggle-btn ${viewMode === 'tiles' ? 'active' : ''}`}
-                onClick={() => setViewMode('tiles')}
-                title="Tiles view"
-              >
-                <span className="view-toggle-icon">⊞</span>
-              </button>
-              <button
-                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-                title="List view"
-              >
-                <span className="view-toggle-icon">☰</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -236,6 +247,25 @@ const People = ({ user, addNotification }) => {
 
       {activeTab === 'users' && (
       <>
+      <div className="users-view-controls">
+        <div className="view-toggle">
+          <button
+            className={`view-toggle-btn ${usersViewMode === 'tiles' ? 'active' : ''}`}
+            onClick={() => setUsersViewMode('tiles')}
+            title="Tiles view"
+          >
+            <span className="view-toggle-icon">⊞</span>
+          </button>
+          <button
+            className={`view-toggle-btn ${usersViewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setUsersViewMode('list')}
+            title="List view"
+          >
+            <span className="view-toggle-icon">☰</span>
+          </button>
+        </div>
+      </div>
+
       <div className="people-stats">
         <div className="stat-card">
           <span className="stat-number">{filteredUsers.length}</span>
