@@ -113,19 +113,20 @@ const OrganizationModal = ({ organization, user, isOpen, onClose, addNotificatio
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
-            <span className="text-2xl mr-3">🏢</span>
-            <div>
-              <h2 className="text-xl font-semibold">{organization.name}</h2>
-              <p className="text-gray-600">{organization.description}</p>
+    <div className="organization-modal">
+      <div className="organization-modal-content">
+        <div className="organization-modal-header">
+          <div className="organization-modal-title">
+            <span className="organization-modal-icon">🏢</span>
+            <div className="organization-modal-text">
+              <h2>{organization.name}</h2>
+              <p>{organization.description || 'No description provided'}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl"
+            className="organization-modal-close"
+            title="Close"
           >
             ×
           </button>
@@ -139,22 +140,30 @@ const OrganizationModal = ({ organization, user, isOpen, onClose, addNotificatio
         ) : (
           <div className="space-y-6">
             {/* Organization Info */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-medium text-gray-900 mb-3">Organization Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <span className="text-sm text-gray-500">Name:</span>
-                  <p className="font-medium">{orgDetails?.name}</p>
+            <div className="organization-info-section">
+              <h3 className="organization-info-title">Organization Information</h3>
+              <div className="organization-info-grid">
+                <div className="organization-info-item">
+                  <span className="organization-info-label">Name:</span>
+                  <p className="organization-info-value">{orgDetails?.name}</p>
                 </div>
-                <div>
-                  <span className="text-sm text-gray-500">Created:</span>
-                  <p className="font-medium">
+                <div className="organization-info-item">
+                  <span className="organization-info-label">Total Members:</span>
+                  <p className="organization-info-value">{orgDetails?.users?.length || 0}</p>
+                </div>
+                <div className="organization-info-item">
+                  <span className="organization-info-label">Created:</span>
+                  <p className="organization-info-value">
                     {new Date(orgDetails?.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="md:col-span-2">
-                  <span className="text-sm text-gray-500">Description:</span>
-                  <p className="font-medium">
+                <div className="organization-info-item">
+                  <span className="organization-info-label">Created By:</span>
+                  <p className="organization-info-value">{orgDetails?.creator_name || 'Unknown'}</p>
+                </div>
+                <div className="organization-info-item organization-info-full">
+                  <span className="organization-info-label">Description:</span>
+                  <p className="organization-info-value">
                     {orgDetails?.description || 'No description provided'}
                   </p>
                 </div>
@@ -162,9 +171,9 @@ const OrganizationModal = ({ organization, user, isOpen, onClose, addNotificatio
             </div>
 
             {/* Members Section */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-medium text-gray-900">
+            <div className="organization-members-section">
+              <div className="organization-members-header">
+                <h3 className="organization-members-title">
                   Members ({orgDetails?.users?.length || 0})
                 </h3>
                 {user?.role === 'admin' && (
@@ -179,51 +188,53 @@ const OrganizationModal = ({ organization, user, isOpen, onClose, addNotificatio
               </div>
 
               {orgDetails?.users && orgDetails.users.length > 0 ? (
-                <div className="space-y-3">
+                <div className="organization-member-list">
                   {orgDetails.users.map(member => (
-                    <div key={member.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    <div key={member.id} className="organization-member-item">
+                      <div className="organization-member-info">
+                        <div className="organization-member-avatar">
                           {member.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="ml-3">
-                          <div className="font-medium">{member.name}</div>
-                          <div className="text-sm text-gray-500">{member.email}</div>
+                        <div className="organization-member-details">
+                          <div className="organization-member-name">{member.name}</div>
+                          <div className="organization-member-email">{member.email}</div>
                         </div>
-                        <div className="ml-3">
+                        <div className="organization-member-role">
                           <span className={`status-badge ${member.role === 'admin' ? 'status-closing' : 'status-active'}`}>
                             {member.role}
                           </span>
                         </div>
                       </div>
-                      {user?.role === 'admin' && (
-                        <button
-                          onClick={() => handleRemoveUser(member.id, member.name)}
-                          disabled={removingUser === member.id}
-                          className="btn btn-danger btn-sm"
-                          title={`Remove ${member.name} from organization`}
-                        >
-                          {removingUser === member.id ? (
-                            <>
-                              <div className="spinner"></div>
-                              Removing...
-                            </>
-                          ) : (
-                            '🗑️ Remove'
-                          )}
-                        </button>
-                      )}
+                      <div className="organization-member-actions">
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => handleRemoveUser(member.id, member.name)}
+                            disabled={removingUser === member.id}
+                            className="btn btn-danger btn-sm"
+                            title={`Remove ${member.name} from organization`}
+                          >
+                            {removingUser === member.id ? (
+                              <>
+                                <div className="spinner"></div>
+                                Removing...
+                              </>
+                            ) : (
+                              '🗑️ Remove'
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <span className="text-4xl block mb-2">👥</span>
+                <div className="organization-empty-state">
+                  <span className="organization-empty-icon">👥</span>
                   <p>No members in this organization yet</p>
                   {user?.role === 'admin' && (
                     <button
                       onClick={openAddUserModal}
-                      className="btn btn-primary mt-3"
+                      className="btn btn-primary"
                     >
                       Add First Member
                     </button>
