@@ -435,6 +435,10 @@ const People = ({ user, addNotification }) => {
           user={user}
           onOrganizationClick={handleOrganizationClick}
           onCreateOrganization={handleCreateOrganization}
+          onDeleteOrganization={handleDeleteOrganization}
+          deletingOrganization={deletingOrganization}
+          viewMode={organizationsViewMode}
+          setViewMode={setOrganizationsViewMode}
           addNotification={addNotification}
         />
       )}
