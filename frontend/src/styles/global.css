@@ -3677,8 +3677,16 @@ tr:hover {
 
 .people-search {
   margin-bottom: 24px;
+}
+
+.organizations-search {
+  margin-bottom: 24px;
+}
+
+.users-view-controls {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
+  margin-bottom: 24px;
 }
 
 .people-filters {
@@ -3744,7 +3752,6 @@ tr:hover {
 
 .search-input-container {
   position: relative;
-  max-width: 500px;
   width: 100%;
 }
 
