@@ -287,7 +287,7 @@ const People = ({ user, addNotification }) => {
         </div>
       </div>
 
-      {viewMode === 'tiles' ? (
+      {usersViewMode === 'tiles' ? (
         <div className="people-grid">
           {filteredUsers.map(user => {
             const activityStatus = getActivityStatus(user.last_active);
