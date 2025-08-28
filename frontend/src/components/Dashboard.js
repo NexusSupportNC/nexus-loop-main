@@ -128,6 +128,18 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
 
 
 
+      {/* Overdue Alert */}
+      {overdueLoops.length > 0 && (
+        <div className="alert alert-danger">
+          <div className="flex items-center space-x-2">
+            <span className="text-lg">🚨</span>
+            <div>
+              <strong>Critical:</strong> You have {overdueLoops.length} overdue loop{overdueLoops.length !== 1 ? 's' : ''} that require immediate attention.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Closing Soon Alert */}
       {closingLoops.length > 0 && (
         <div className="alert alert-warning">
