@@ -52,11 +52,26 @@ try {
   } else {
     console.log('Participants column already exists in loops table');
   }
+
+  // Compliance columns
+  const hasComplianceStatus = tableInfo.some(column => column.name === 'compliance_status');
+  if (!hasComplianceStatus) {
+    console.log('Adding compliance columns to loops table...');
+    db.prepare("ALTER TABLE loops ADD COLUMN compliance_status TEXT DEFAULT 'none'").run();
+    db.prepare('ALTER TABLE loops ADD COLUMN compliance_requested_at DATETIME').run();
+    db.prepare('ALTER TABLE loops ADD COLUMN compliance_reviewed_at DATETIME').run();
+    db.prepare('ALTER TABLE loops ADD COLUMN compliance_reviewer_id INTEGER').run();
+    console.log('Compliance columns added successfully');
+  }
 } catch (error) {
   console.error('Error during migration:', error);
   // Attempt to add columns individually
   try { db.prepare('ALTER TABLE loops ADD COLUMN images TEXT').run(); } catch (e) {}
   try { db.prepare('ALTER TABLE loops ADD COLUMN participants TEXT').run(); } catch (e) {}
+  try { db.prepare("ALTER TABLE loops ADD COLUMN compliance_status TEXT DEFAULT 'none'").run(); } catch (e) {}
+  try { db.prepare('ALTER TABLE loops ADD COLUMN compliance_requested_at DATETIME').run(); } catch (e) {}
+  try { db.prepare('ALTER TABLE loops ADD COLUMN compliance_reviewed_at DATETIME').run(); } catch (e) {}
+  try { db.prepare('ALTER TABLE loops ADD COLUMN compliance_reviewer_id INTEGER').run(); } catch (e) {}
 }
 
 module.exports = {
