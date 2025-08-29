@@ -106,7 +106,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
   }
 
   return (
-    <div className="dashboard-container space-y-6" style={{marginTop: 0, paddingTop: 0}}>
+    <div className="dashboard-container space-y-6 dashboard-top-reset">
       {/* Welcome Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -351,7 +351,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-200 rounded-full mb-4 group-hover:bg-blue-300 transition-colors duration-300">
                 <span className="text-2xl">📋</span>
               </div>
-              <div className="text-4xl font-black text-blue-700 group-hover:text-blue-800 transition-colors duration-300" style={{margin: '-5px 0 16px'}}>
+              <div className="text-4xl font-black text-blue-700 group-hover:text-blue-800 transition-colors duration-300 stat-value-offset">
                 {stats.total}
               </div>
               <div className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-1">Total Loops</div>
@@ -368,7 +368,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-200 rounded-full mb-4 group-hover:bg-green-300 transition-colors duration-300">
                 <span className="text-2xl">🟢</span>
               </div>
-              <div className="text-4xl font-black text-green-700 group-hover:text-green-800 transition-colors duration-300" style={{margin: '-5px 0 16px'}}>
+              <div className="text-4xl font-black text-green-700 group-hover:text-green-800 transition-colors duration-300 stat-value-offset">
                 {stats.active}
               </div>
               <div className="text-sm font-bold text-green-800 uppercase tracking-wider mb-1">Active</div>
@@ -383,7 +383,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
             <div className="absolute top-0 right-0 w-20 h-20 bg-amber-300 rounded-full opacity-20 -mr-10 -mt-10"></div>
             <div className="relative z-10 text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-200 rounded-full mb-4 group-hover:bg-amber-300 transition-colors duration-300">
-                <span className="text-2xl" style={{paddingTop: '1px'}}>⏰</span>
+                <span className="text-2xl icon-nudge-top-1">⏰</span>
               </div>
               <div className="text-4xl font-black text-amber-700 mb-2 group-hover:text-amber-800 transition-colors duration-300">
                 {stats.closing_soon}
