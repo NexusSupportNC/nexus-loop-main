@@ -158,6 +158,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Attention Required Loops */}
+        {isAdmin ? null : (
         <div className="card">
           <div className="card-header">
             <h3 className="text-lg font-semibold">Loops Requiring Attention</h3>
@@ -232,6 +233,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
           </div>
         </div>
 
+        )}
         {/* Recent Activity */}
         <div className="card">
           <div className="card-header">
