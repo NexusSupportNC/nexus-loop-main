@@ -47,7 +47,8 @@ const adminController = {
         startDate: req.query.startDate,
         endDate: req.query.endDate,
         search: req.query.search,
-        limit: req.query.limit ? parseInt(req.query.limit) : 100
+        limit: req.query.limit ? parseInt(req.query.limit) : 100,
+        excludeLoopActivity: true
       };
 
       const logs = ActivityLogger.getActivityLogs(filters);
@@ -356,7 +357,8 @@ const adminController = {
         actionType: req.query.actionType,
         startDate: req.query.startDate,
         endDate: req.query.endDate,
-        search: req.query.search
+        search: req.query.search,
+        excludeLoopActivity: true
       };
 
       const logs = ActivityLogger.getActivityLogs(filters);
