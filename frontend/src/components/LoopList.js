@@ -194,13 +194,13 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
       {/* Filters and Search */}
       <div className="card">
         <div className="card-body">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Quick Filter
               </label>
               <div className="flex items-center gap-2">
-                <input id="closing_month" type="checkbox" checked={closingThisMonth} onChange={(e)=>setClosingThisMonth(e.target.checked)} />
+                <input id="closing_month" type="checkbox" className="h-4 w-4" checked={closingThisMonth} onChange={(e)=>setClosingThisMonth(e.target.checked)} />
                 <label htmlFor="closing_month" className="text-sm">Closing this month</label>
               </div>
             </div>
@@ -312,7 +312,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
                   <th>Status</th>
                   <th>End Date</th>
                   <th>Created by</th>
-                  <th className="actions-header" style={{textAlign: 'center'}}>Actions</th>
+                  <th className="actions-header text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
