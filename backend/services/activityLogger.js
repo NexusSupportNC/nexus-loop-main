@@ -71,6 +71,11 @@ class ActivityLogger {
         params.push(searchTerm, searchTerm, searchTerm);
       }
 
+      if (filters.loopId) {
+        query += " AND al.additional_data LIKE ?";
+        params.push(`%"loopId": ${parseInt(filters.loopId)}%`);
+      }
+
       query += ' ORDER BY al.created_at DESC';
 
       if (filters.limit) {
