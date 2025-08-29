@@ -15,6 +15,7 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
     end_date: '',
     tags: '',
     notes: '',
+    participants: [],
     ...initialData
   });
 
@@ -37,7 +38,16 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
         start_date: dateUtils.formatDateForInput(initialData.start_date) || dateUtils.getCurrentDate(),
         end_date: dateUtils.formatDateForInput(initialData.end_date) || '',
         tags: initialData.tags || '',
-        notes: initialData.notes || ''
+        notes: initialData.notes || '',
+        participants: (() => {
+          try {
+            if (Array.isArray(initialData.participants)) return initialData.participants;
+            if (typeof initialData.participants === 'string' && initialData.participants.trim()) {
+              return JSON.parse(initialData.participants);
+            }
+          } catch (e) {}
+          return [];
+        })()
       });
 
       // Set existing images if available
@@ -150,6 +160,12 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
               ? customType.trim()
               : formData[key];
             formDataToSubmit.append(key, typeValue);
+          } else if (key === 'participants') {
+            try {
+              formDataToSubmit.append('participants', JSON.stringify(formData.participants || []));
+            } catch (e) {
+              formDataToSubmit.append('participants', '[]');
+            }
           } else {
             formDataToSubmit.append(key, formData[key]);
           }
