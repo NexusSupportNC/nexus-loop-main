@@ -396,6 +396,106 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
         </div>
       </div>
 
+      {/* Participants & Access */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="text-lg font-semibold">Participants & Access</h3>
+        </div>
+        <div className="card-body">
+          <div className="space-y-4">
+            {(formData.participants || []).map((p, idx) => (
+              <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                <div className="form-group">
+                  <label>Name</label>
+                  <input
+                    type="text"
+                    value={p.name || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.map((pp, i) => i === idx ? { ...pp, name: e.target.value } : pp)
+                    }))}
+                    placeholder="Full name"
+                    disabled={loading}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={p.email || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.map((pp, i) => i === idx ? { ...pp, email: e.target.value } : pp)
+                    }))}
+                    placeholder="email@example.com"
+                    disabled={loading}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Role</label>
+                  <select
+                    value={p.role || 'agent'}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.map((pp, i) => i === idx ? { ...pp, role: e.target.value } : pp)
+                    }))}
+                    disabled={loading}
+                  >
+                    <option value="agent">Agent</option>
+                    <option value="client">Client</option>
+                    <option value="service-provider">Service Provider</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Permission</label>
+                  <select
+                    value={p.permission || 'view'}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.map((pp, i) => i === idx ? { ...pp, permission: e.target.value } : pp)
+                    }))}
+                    disabled={loading}
+                  >
+                    <option value="view">View-only</option>
+                    <option value="edit">Edit</option>
+                    <option value="none">No access</option>
+                  </select>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.filter((_, i) => i !== idx)
+                    }))}
+                    disabled={loading}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <div>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => setFormData(prev => ({
+                  ...prev,
+                  participants: [...(prev.participants || []), { name: '', email: '', role: 'agent', permission: 'view' }]
+                }))}
+                disabled={loading}
+              >
+                + Add Participant
+              </button>
+              <p className="text-xs text-gray-500 mt-2">Admins can view all loops regardless of access settings.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Additional Information */}
       <div className="card">
         <div className="card-header">
