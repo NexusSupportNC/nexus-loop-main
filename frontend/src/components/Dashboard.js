@@ -145,7 +145,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
       )}
 
       {/* Closing Soon Alert */}
-      {closingLoops.length > 0 && (
+      {!isAdmin && closingLoops.length > 0 && (
         <div className="alert alert-warning">
           <div className="flex items-center space-x-2">
             <span className="text-lg">⚠️</span>
