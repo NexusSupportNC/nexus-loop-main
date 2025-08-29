@@ -25,12 +25,12 @@ db.prepare(`
   )
 `).run();
 
-// Migration: Add images column if it doesn't exist
+// Migration: Add images and participants columns if they don't exist
 try {
-  // Check if images column exists
   const tableInfo = db.prepare("PRAGMA table_info(loops)").all();
   console.log('Current loops table columns:', tableInfo.map(col => col.name));
   const hasImagesColumn = tableInfo.some(column => column.name === 'images');
+  const hasParticipantsColumn = tableInfo.some(column => column.name === 'participants');
 
   if (!hasImagesColumn) {
     console.log('Adding images column to loops table...');
@@ -39,16 +39,19 @@ try {
   } else {
     console.log('Images column already exists in loops table');
   }
+
+  if (!hasParticipantsColumn) {
+    console.log('Adding participants column to loops table...');
+    db.prepare('ALTER TABLE loops ADD COLUMN participants TEXT').run();
+    console.log('Participants column added successfully');
+  } else {
+    console.log('Participants column already exists in loops table');
+  }
 } catch (error) {
   console.error('Error during migration:', error);
-  // If migration fails, try again
-  try {
-    console.log('Attempting to add images column with ALTER TABLE...');
-    db.prepare('ALTER TABLE loops ADD COLUMN images TEXT').run();
-    console.log('Images column added on retry');
-  } catch (retryError) {
-    console.error('Retry failed:', retryError);
-  }
+  // Attempt to add columns individually
+  try { db.prepare('ALTER TABLE loops ADD COLUMN images TEXT').run(); } catch (e) {}
+  try { db.prepare('ALTER TABLE loops ADD COLUMN participants TEXT').run(); } catch (e) {}
 }
 
 module.exports = {
