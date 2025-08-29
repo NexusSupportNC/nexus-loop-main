@@ -5,6 +5,7 @@ const pdfGenerator = require('../utils/pdfGenerator');
 const imageUtils = require('../utils/imageUtils');
 const emailNotificationService = require('../services/emailNotificationService');
 const ActivityLogger = require('../services/activityLogger');
+const db = require('../database/config');
 
 const loopDocumentModel = require('../models/loopDocumentModel');
 const loopTaskModel = require('../models/loopTaskModel');
