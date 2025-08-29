@@ -76,6 +76,11 @@ class ActivityLogger {
         params.push(`%"loopId": ${parseInt(filters.loopId)}%`);
       }
 
+      // Exclude loop-related activity when requested (default for admin main logs)
+      if (filters.excludeLoopActivity) {
+        query += " AND (al.additional_data IS NULL OR al.additional_data NOT LIKE '%\"loopId\":%')";
+      }
+
       query += ' ORDER BY al.created_at DESC';
 
       if (filters.limit) {
@@ -139,7 +144,7 @@ class ActivityLogger {
 
   static clearAllLogs() {
     try {
-      const result = db.prepare('DELETE FROM activity_logs').run();
+      const result = db.prepare("DELETE FROM activity_logs WHERE additional_data IS NULL OR additional_data NOT LIKE '%\"loopId\":%'").run();
       console.log(`Cleared ${result.changes} activity logs`);
       return { cleared_count: result.changes };
     } catch (error) {
