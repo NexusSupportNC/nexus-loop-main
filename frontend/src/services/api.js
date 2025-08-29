@@ -93,6 +93,22 @@ export const loopAPI = {
     });
   },
 
+  // Documents
+  listDocuments: (loopId) => api.get(`/loops/${loopId}/documents`),
+  uploadDocuments: (loopId, formData) => api.post(`/loops/${loopId}/documents`, formData),
+  deleteDocument: (loopId, docId) => api.delete(`/loops/${loopId}/documents/${docId}`),
+
+  // Tasks
+  listTasks: (loopId) => api.get(`/loops/${loopId}/tasks`),
+  addTask: (loopId, data) => api.post(`/loops/${loopId}/tasks`, data),
+  updateTask: (loopId, taskId, data) => api.put(`/loops/${loopId}/tasks/${taskId}`, data),
+  deleteTask: (loopId, taskId) => api.delete(`/loops/${loopId}/tasks/${taskId}`),
+
+  // Compliance
+  requestCompliance: (loopId) => api.post(`/loops/${loopId}/compliance/request`),
+  approveCompliance: (loopId) => api.put(`/loops/${loopId}/compliance/approve`),
+  denyCompliance: (loopId) => api.put(`/loops/${loopId}/compliance/deny`),
+
   // Image operations
   deleteLoopImage: (loopId, filename) => api.delete(`/loops/${loopId}/images/${filename}`)
 };
