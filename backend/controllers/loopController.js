@@ -6,6 +6,9 @@ const imageUtils = require('../utils/imageUtils');
 const emailNotificationService = require('../services/emailNotificationService');
 const ActivityLogger = require('../services/activityLogger');
 
+const loopDocumentModel = require('../models/loopDocumentModel');
+const loopTaskModel = require('../models/loopTaskModel');
+
 const loopController = {
   createLoop: async (req, res, next) => {
     try {
