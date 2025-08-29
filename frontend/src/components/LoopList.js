@@ -23,7 +23,8 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
           status: statusFilter || '',
           type: typeFilter || '',
           sort: sortBy || 'created_at',
-          order: sortOrder || 'desc'
+          order: sortOrder || 'desc',
+          end_month: closingThisMonth ? 'current' : undefined
         };
 
         const response = await loopAPI.getLoops(params);
@@ -40,7 +41,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     };
 
     fetchLoops();
-  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, addNotification]);
+  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, addNotification]);
 
   const refreshLoops = async () => {
     try {
@@ -50,7 +51,8 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
         status: statusFilter || '',
         type: typeFilter || '',
         sort: sortBy || 'created_at',
-        order: sortOrder || 'desc'
+        order: sortOrder || 'desc',
+        end_month: closingThisMonth ? 'current' : undefined
       };
 
       const response = await loopAPI.getLoops(params);
