@@ -133,7 +133,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
 
 
       {/* Overdue Alert */}
-      {overdueLoops.length > 0 && (
+      {!isAdmin && overdueLoops.length > 0 && (
         <div className="alert alert-danger">
           <div className="flex items-center space-x-2">
             <span className="text-lg">🚨</span>
