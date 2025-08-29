@@ -175,7 +175,7 @@ const EditLoop = ({ user, addNotification }) => {
             onClick={() => navigate(-1)}
             className="text-gray-600 hover:text-gray-900 transition-colors"
           >
-            ← Back
+            ��� Back
           </button>
           <div className="h-6 w-px bg-gray-300"></div>
           <nav className="text-sm text-gray-600">
@@ -352,7 +352,7 @@ const EditLoop = ({ user, addNotification }) => {
             <div className="space-y-2">
               {activity.map((log) => (
                 <div key={log.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-2 h-2 rounded-full" style={{background:'#3b82f6'}}></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
                   <div className="flex-1">
                     <div className="text-sm font-medium">{log.action_type.replaceAll('_',' ')}</div>
                     <div className="text-xs text-gray-500">{dateUtils.formatDateTime(log.created_at)} • {log.user_name || 'User'} ({log.user_email || ''})</div>
