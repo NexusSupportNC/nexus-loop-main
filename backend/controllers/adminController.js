@@ -47,9 +47,17 @@ const adminController = {
         startDate: req.query.startDate,
         endDate: req.query.endDate,
         search: req.query.search,
-        limit: req.query.limit ? parseInt(req.query.limit) : 100,
-        excludeLoopActivity: true
+        limit: req.query.limit ? parseInt(req.query.limit) : 100
       };
+
+      // Control inclusion/exclusion of loop activity via query params
+      if (req.query.onlyLoop === 'true') {
+        filters.onlyLoopActivity = true;
+      } else if (req.query.includeLoop === 'true') {
+        filters.excludeLoopActivity = false;
+      } else {
+        filters.excludeLoopActivity = true; // default: show system logs only
+      }
 
       const logs = ActivityLogger.getActivityLogs(filters);
       const stats = ActivityLogger.getActivityStats();
@@ -357,9 +365,17 @@ const adminController = {
         actionType: req.query.actionType,
         startDate: req.query.startDate,
         endDate: req.query.endDate,
-        search: req.query.search,
-        excludeLoopActivity: true
+        search: req.query.search
       };
+
+      // Control inclusion/exclusion of loop activity via query params
+      if (req.query.onlyLoop === 'true') {
+        filters.onlyLoopActivity = true;
+      } else if (req.query.includeLoop === 'true') {
+        filters.excludeLoopActivity = false;
+      } else {
+        filters.excludeLoopActivity = true;
+      }
 
       const logs = ActivityLogger.getActivityLogs(filters);
 
