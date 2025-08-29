@@ -159,6 +159,7 @@ module.exports = {
       loopData.client_phone,
       loopData.notes,
       loopData.images,
+      loopData.participants,
       id
     );
   },
