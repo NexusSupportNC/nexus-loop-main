@@ -76,6 +76,11 @@ class ActivityLogger {
         params.push(`%"loopId": ${parseInt(filters.loopId)}%`);
       }
 
+      // Only include loop-related activity if requested
+      if (filters.onlyLoopActivity) {
+        query += " AND al.additional_data LIKE '%\"loopId\":%'";
+      }
+
       // Exclude loop-related activity when requested (default for admin main logs)
       if (filters.excludeLoopActivity) {
         query += " AND (al.additional_data IS NULL OR al.additional_data NOT LIKE '%\"loopId\":%')";
