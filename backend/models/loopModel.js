@@ -75,7 +75,8 @@ module.exports = {
       loopData.client_email,
       loopData.client_phone,
       loopData.notes,
-      loopData.images
+      loopData.images,
+      loopData.participants
     );
   },
 
