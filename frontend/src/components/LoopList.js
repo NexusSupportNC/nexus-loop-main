@@ -133,6 +133,30 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     );
   };
 
+  const getDueBadge = (endDate, status) => {
+    if (!endDate || status === 'closed' || status === 'cancelled') return null;
+    const days = dateUtils.getDaysUntil(endDate);
+    if (days === null) return null;
+
+    if (days < 0) {
+      const d = Math.abs(days);
+      return (
+        <span className="due-badge due-badge-overdue">OVERDUE: {d} {d === 1 ? 'DAY' : 'DAYS'}</span>
+      );
+    }
+    if (days === 0) {
+      return (
+        <span className="due-badge due-badge-today">DUE TODAY</span>
+      );
+    }
+    if (days <= 3) {
+      return (
+        <span className="due-badge due-badge-soon">CLOSING SOON: {days} {days === 1 ? 'DAY' : 'DAYS'} LEFT</span>
+      );
+    }
+    return null;
+  };
+
   const getCountdownInfo = (endDate, status) => {
     if (!endDate || status === 'closed' || status === 'cancelled') {
       return null;
@@ -294,11 +318,9 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
                     </td>
                     <td>{getStatusBadge(loop.status)}</td>
                     <td>
-                      <div>
-                        <div className="text-sm text-gray-900">
-                          {dateUtils.formatDate(loop.end_date)}
-                        </div>
-                        {getCountdownInfo(loop.end_date, loop.status)}
+                      <div className="end-date-row">
+                        <span className="text-sm text-gray-900">{dateUtils.formatDate(loop.end_date)}</span>
+                        {getDueBadge(loop.end_date, loop.status)}
                       </div>
                     </td>
                     <td className="creator-cell">{loop.creator_name}</td>
