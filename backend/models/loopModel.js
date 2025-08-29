@@ -21,7 +21,12 @@ db.prepare(`
     images TEXT,
     participants TEXT,
     archived BOOLEAN DEFAULT 0,
-    FOREIGN KEY (creator_id) REFERENCES users (id)
+    compliance_status TEXT DEFAULT 'none',
+    compliance_requested_at DATETIME,
+    compliance_reviewed_at DATETIME,
+    compliance_reviewer_id INTEGER,
+    FOREIGN KEY (creator_id) REFERENCES users (id),
+    FOREIGN KEY (compliance_reviewer_id) REFERENCES users (id)
   )
 `).run();
 
