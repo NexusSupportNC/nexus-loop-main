@@ -125,6 +125,14 @@ module.exports = {
       params.push(searchTerm, searchTerm, searchTerm);
     }
 
+    if (filters.end_month === 'current') {
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      query += ' AND l.end_date BETWEEN ? AND ?';
+      params.push(firstDay, lastDay);
+    }
+
     if (filters.creator_id) {
       query += ' AND l.creator_id = ?';
       params.push(filters.creator_id);
