@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import LoopForm from '../components/LoopForm';
 import LoopDocuments from '../components/LoopDocuments';
+import LoopFiles from '../components/LoopFiles';
+import LoopTasks from '../components/LoopTasks';
 import { loopAPI, apiUtils } from '../services/api';
 import { dateUtils } from '../utils/dateUtils';
 
