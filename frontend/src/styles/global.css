@@ -2854,6 +2854,11 @@ tr:hover {
 }
 
 /* Utilities */
+
+/* Dashboard layout utilities */
+.dashboard-top-reset { margin-top: 0; padding-top: 0; }
+.stat-value-offset { margin: -5px 0 16px; }
+.icon-nudge-top-1 { padding-top: 1px; }
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
