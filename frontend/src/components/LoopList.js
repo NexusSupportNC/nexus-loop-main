@@ -194,6 +194,13 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
         <div className="card-body">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Quick Filter</label>
+              <div className="flex items-center gap-2">
+                <input id="closing_month" type="checkbox" checked={closingThisMonth} onChange={(e)=>setClosingThisMonth(e.target.checked)} />
+                <label htmlFor="closing_month" className="text-sm">Closing this month</label>
+              </div>
+            </div>
+            <div>
               <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
                 Search
               </label>
