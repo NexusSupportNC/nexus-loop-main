@@ -433,6 +433,162 @@ const loopController = {
     }
   },
 
+  // Documents
+  listDocuments: (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const loop = loopModel.getLoopById(id);
+      if (!loop) return res.status(404).json({ success: false, error: 'Loop not found' });
+      if (req.user.role !== 'admin' && loop.creator_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      const docs = loopDocumentModel.listByLoop(id);
+      res.json({ success: true, documents: docs });
+    } catch (error) { next(error); }
+  },
+
+  uploadDocuments: (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const loop = loopModel.getLoopById(id);
+      if (!loop) return res.status(404).json({ success: false, error: 'Loop not found' });
+      if (req.user.role !== 'admin' && loop.creator_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      const files = req.files || [];
+      for (const file of files) {
+        loopDocumentModel.addDocument(parseInt(id), file, req.user.id);
+      }
+      ActivityLogger.log(req.user.id, 'DOCUMENT_UPLOADED', `Uploaded ${files.length} document(s) to loop ${id}` , req, { loopId: parseInt(id), count: files.length });
+      res.json({ success: true, message: 'Documents uploaded', uploaded: files.length });
+    } catch (error) { next(error); }
+  },
+
+  deleteDocument: (req, res, next) => {
+    try {
+      const { id, docId } = req.params;
+      const loop = loopModel.getLoopById(id);
+      if (!loop) return res.status(404).json({ success: false, error: 'Loop not found' });
+      if (req.user.role !== 'admin' && loop.creator_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      const doc = loopDocumentModel.getById(docId);
+      if (!doc) return res.status(404).json({ success: false, error: 'Document not found' });
+      loopDocumentModel.deleteDocument(docId);
+      ActivityLogger.log(req.user.id, 'DOCUMENT_DELETED', `Deleted document ${docId} from loop ${id}` , req, { loopId: parseInt(id), docId: parseInt(docId) });
+      res.json({ success: true, message: 'Document deleted' });
+    } catch (error) { next(error); }
+  },
+
+  // Tasks
+  listTasks: (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const loop = loopModel.getLoopById(id);
+      if (!loop) return res.status(404).json({ success: false, error: 'Loop not found' });
+      if (req.user.role !== 'admin' && loop.creator_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      const tasks = loopTaskModel.listByLoop(id);
+      res.json({ success: true, tasks });
+    } catch (error) { next(error); }
+  },
+
+  addTask: (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { title, due_date } = req.body;
+      if (!title || !title.trim()) return res.status(400).json({ success: false, error: 'Task title is required' });
+      const loop = loopModel.getLoopById(id);
+      if (!loop) return res.status(404).json({ success: false, error: 'Loop not found' });
+      if (req.user.role !== 'admin' && loop.creator_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      const r = loopTaskModel.addTask(parseInt(id), title.trim(), due_date || null, req.user.id);
+      ActivityLogger.log(req.user.id, 'TASK_CREATED', `Created task in loop ${id}: ${title.trim()}`, req, { loopId: parseInt(id), title: title.trim(), due_date: due_date || null });
+      res.status(201).json({ success: true, taskId: r.lastInsertRowid });
+    } catch (error) { next(error); }
+  },
+
+  updateTask: (req, res, next) => {
+    try {
+      const { id, taskId } = req.params;
+      const loop = loopModel.getLoopById(id);
+      if (!loop) return res.status(404).json({ success: false, error: 'Loop not found' });
+      if (req.user.role !== 'admin' && loop.creator_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      const payload = { title: req.body.title, due_date: req.body.due_date, completed: req.body.completed };
+      loopTaskModel.updateTask(taskId, payload);
+      ActivityLogger.log(req.user.id, 'TASK_UPDATED', `Updated task ${taskId} in loop ${id}`, req, { loopId: parseInt(id), taskId: parseInt(taskId), changes: payload });
+      res.json({ success: true, message: 'Task updated' });
+    } catch (error) { next(error); }
+  },
+
+  deleteTask: (req, res, next) => {
+    try {
+      const { id, taskId } = req.params;
+      const loop = loopModel.getLoopById(id);
+      if (!loop) return res.status(404).json({ success: false, error: 'Loop not found' });
+      if (req.user.role !== 'admin' && loop.creator_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      loopTaskModel.deleteTask(taskId);
+      ActivityLogger.log(req.user.id, 'TASK_DELETED', `Deleted task ${taskId} in loop ${id}`, req, { loopId: parseInt(id), taskId: parseInt(taskId) });
+      res.json({ success: true, message: 'Task deleted' });
+    } catch (error) { next(error); }
+  },
+
+  // Compliance
+  requestComplianceReview: (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const loop = loopModel.getLoopById(id);
+      if (!loop) return res.status(404).json({ success: false, error: 'Loop not found' });
+      if (req.user.role !== 'admin' && loop.creator_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      db.prepare(`UPDATE loops SET compliance_status = 'pending', compliance_requested_at = CURRENT_TIMESTAMP WHERE id = ?`).run(id);
+      ActivityLogger.log(req.user.id, 'COMPLIANCE_REQUESTED', `Requested compliance review for loop ${id}`, req, { loopId: parseInt(id) });
+      res.json({ success: true, message: 'Compliance review requested' });
+    } catch (error) { next(error); }
+  },
+
+  approveCompliance: (req, res, next) => {
+    try {
+      if (req.user.role !== 'admin') return res.status(403).json({ success: false, error: 'Only admins can approve compliance' });
+      const { id } = req.params;
+      db.prepare(`UPDATE loops SET compliance_status = 'approved', compliance_reviewed_at = CURRENT_TIMESTAMP, compliance_reviewer_id = ? WHERE id = ?`).run(req.user.id, id);
+      ActivityLogger.log(req.user.id, 'COMPLIANCE_APPROVED', `Approved compliance for loop ${id}`, req, { loopId: parseInt(id) });
+      res.json({ success: true, message: 'Compliance approved' });
+    } catch (error) { next(error); }
+  },
+
+  denyCompliance: (req, res, next) => {
+    try {
+      if (req.user.role !== 'admin') return res.status(403).json({ success: false, error: 'Only admins can deny compliance' });
+      const { id } = req.params;
+      db.prepare(`UPDATE loops SET compliance_status = 'denied', compliance_reviewed_at = CURRENT_TIMESTAMP, compliance_reviewer_id = ? WHERE id = ?`).run(req.user.id, id);
+      ActivityLogger.log(req.user.id, 'COMPLIANCE_DENIED', `Denied compliance for loop ${id}`, req, { loopId: parseInt(id) });
+      res.json({ success: true, message: 'Compliance denied' });
+    } catch (error) { next(error); }
+  },
+
+  // Loop activity for creators/admins
+  getLoopActivity: (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const loop = loopModel.getLoopById(id);
+      if (!loop) return res.status(404).json({ success: false, error: 'Loop not found' });
+      if (req.user.role !== 'admin' && loop.creator_id !== req.user.id) {
+        return res.status(403).json({ success: false, error: 'Access denied' });
+      }
+      const ActivityLoggerService = require('../services/activityLogger');
+      const logs = ActivityLoggerService.getActivityLogs({ loopId: parseInt(id), limit: 100 });
+      res.json({ success: true, logs, count: logs.length });
+    } catch (error) { next(error); }
+  },
+
   getClosingLoops: (req, res, next) => {
     try {
       // For non-admin users, only show their own loops
