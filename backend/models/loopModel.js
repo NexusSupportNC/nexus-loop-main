@@ -143,7 +143,7 @@ module.exports = {
       UPDATE loops SET
         type = ?, sale = ?, start_date = ?, end_date = ?, tags = ?,
         status = ?, property_address = ?, client_name = ?, client_email = ?,
-        client_phone = ?, notes = ?, images = ?, updated_at = CURRENT_TIMESTAMP
+        client_phone = ?, notes = ?, images = ?, participants = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
     return stmt.run(
