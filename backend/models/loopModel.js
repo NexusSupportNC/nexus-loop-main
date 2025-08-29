@@ -19,6 +19,7 @@ db.prepare(`
     client_phone TEXT,
     notes TEXT,
     images TEXT,
+    participants TEXT,
     archived BOOLEAN DEFAULT 0,
     FOREIGN KEY (creator_id) REFERENCES users (id)
   )
