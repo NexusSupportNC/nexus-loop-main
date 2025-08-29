@@ -59,8 +59,8 @@ module.exports = {
     const stmt = db.prepare(`
       INSERT INTO loops (
         type, sale, creator_id, start_date, end_date, tags, status,
-        property_address, client_name, client_email, client_phone, notes, images
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        property_address, client_name, client_email, client_phone, notes, images, participants
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
       loopData.type,
