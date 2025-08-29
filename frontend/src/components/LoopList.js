@@ -12,6 +12,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
   const [typeFilter, setTypeFilter] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [closingThisMonth, setClosingThisMonth] = useState(false);
 
   useEffect(() => {
     const fetchLoops = async () => {
