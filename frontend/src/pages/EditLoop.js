@@ -11,6 +11,7 @@ const EditLoop = ({ user, addNotification }) => {
   const [loop, setLoop] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
+  const [activity, setActivity] = useState([]);
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -37,6 +38,17 @@ const EditLoop = ({ user, addNotification }) => {
   useEffect(() => {
     fetchLoop();
   }, [fetchLoop]);
+
+  useEffect(() => {
+    const loadActivity = async () => {
+      try {
+        const res = await fetch(`/api/loops/${id}/activity`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+        const data = await res.json();
+        if (data.success) setActivity(data.logs);
+      } catch (e) { /* ignore */ }
+    };
+    loadActivity();
+  }, [id]);
 
   const handleSubmit = async (formData) => {
     setLoading(true);
@@ -289,42 +301,67 @@ const EditLoop = ({ user, addNotification }) => {
         isEdit={true}
       />
 
-      {/* Documents Section */}
+      {/* Files Section */}
+      <div className="mt-8">
+        <LoopFiles loopId={id} user={user} addNotification={addNotification} />
+      </div>
+
+      {/* Tasks Section */}
+      <div className="mt-8">
+        <LoopTasks loopId={id} addNotification={addNotification} />
+      </div>
+
+      {/* Documents Template Generator (Admin) */}
       {user?.role === 'admin' && (
         <div className="mt-8">
           <LoopDocuments loopId={id} addNotification={addNotification} />
         </div>
       )}
 
-      {/* Activity Log Placeholder */}
+      {/* Compliance Actions */}
+      <div className="mt-8 card">
+        <div className="card-header"><h3 className="text-lg font-semibold">Compliance Review</h3></div>
+        <div className="card-body flex gap-2 items-center">
+          <div className="text-sm">Status: <span className="font-medium capitalize">{loop.compliance_status || 'none'}</span></div>
+          {loop.compliance_status === 'pending' && loop.compliance_requested_at && (
+            <div className="text-xs text-gray-500">Requested {dateUtils.formatDateTime(loop.compliance_requested_at)}</div>
+          )}
+          <div className="ml-auto flex gap-2">
+            {user?.role !== 'admin' && (
+              <button className="btn btn-outline btn-sm" onClick={async ()=>{ try { await loopAPI.requestCompliance(id); addNotification('Compliance review requested','success'); fetchLoop(); } catch(e){ addNotification(apiUtils.getErrorMessage(e),'error'); } }}>Request Review</button>
+            )}
+            {user?.role === 'admin' && (
+              <>
+                <button className="btn btn-success btn-sm" onClick={async ()=>{ try { await loopAPI.approveCompliance(id); addNotification('Compliance approved','success'); fetchLoop(); } catch(e){ addNotification(apiUtils.getErrorMessage(e),'error'); } }}>Approve</button>
+                <button className="btn btn-danger btn-sm" onClick={async ()=>{ try { await loopAPI.denyCompliance(id); addNotification('Compliance denied','success'); fetchLoop(); } catch(e){ addNotification(apiUtils.getErrorMessage(e),'error'); } }}>Deny</button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Activity Log */}
       <div className="mt-8 card">
         <div className="card-header">
           <h3 className="text-lg font-semibold">Activity Log</h3>
         </div>
         <div className="card-body">
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Loop created</p>
-                <p className="text-xs text-gray-500">
-                  {dateUtils.formatDateTime(loop.created_at)} by {loop.creator_name}
-                </p>
-              </div>
-            </div>
-            
-            {loop.updated_at !== loop.created_at && (
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Loop updated</p>
-                  <p className="text-xs text-gray-500">
-                    {dateUtils.formatDateTime(loop.updated_at)}
-                  </p>
+          {activity.length === 0 ? (
+            <div className="text-gray-500">No recent activity</div>
+          ) : (
+            <div className="space-y-2">
+              {activity.map((log) => (
+                <div key={log.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="w-2 h-2 rounded-full" style={{background:'#3b82f6'}}></div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{log.action_type.replaceAll('_',' ')}</div>
+                    <div className="text-xs text-gray-500">{dateUtils.formatDateTime(log.created_at)} • {log.user_name || 'User'} ({log.user_email || ''})</div>
+                    <div className="text-xs text-gray-600">{log.description}</div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
