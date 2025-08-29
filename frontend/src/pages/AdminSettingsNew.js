@@ -1288,6 +1288,8 @@ const ActivityLogs = ({ addNotification }) => {
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [activityView, setActivityView] = useState('system');
+  const [loopIdFilter, setLoopIdFilter] = useState('');
   const [filters, setFilters] = useState({
     actionType: '',
     startDate: '',
@@ -1297,14 +1299,16 @@ const ActivityLogs = ({ addNotification }) => {
 
   useEffect(() => {
     fetchLogs();
-  }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filters, activityView, loopIdFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchLogs = async () => {
     try {
       setLoading(true);
       const response = await adminAPI.getActivityLogs({
         ...filters,
-        limit: 100
+        limit: 100,
+        onlyLoop: activityView === 'loop',
+        loopId: activityView === 'loop' && loopIdFilter ? parseInt(loopIdFilter, 10) : undefined
       });
       
       if (response.data.success) {
@@ -1328,7 +1332,11 @@ const ActivityLogs = ({ addNotification }) => {
 
   const exportLogs = async () => {
     try {
-      const response = await adminAPI.exportActivityLogs(filters);
+      const response = await adminAPI.exportActivityLogs({
+        ...filters,
+        onlyLoop: activityView === 'loop',
+        loopId: activityView === 'loop' && loopIdFilter ? parseInt(loopIdFilter, 10) : undefined
+      });
       apiUtils.downloadFile(response.data, 'activity-logs.csv');
       addNotification('Activity logs exported successfully', 'success');
     } catch (error) {
@@ -1396,6 +1404,16 @@ const ActivityLogs = ({ addNotification }) => {
       {/* Filters and Export */}
       <div className="card">
         <div className="card-body">
+          <div className="tab-nav mb-4">
+            <button className={`tab-btn ${activityView === 'system' ? 'active' : ''}`} onClick={() => setActivityView('system')}>
+              <span className="tab-icon">🖥️</span>
+              <span>System Activity</span>
+            </button>
+            <button className={`tab-btn ${activityView === 'loop' ? 'active' : ''}`} onClick={() => setActivityView('loop')}>
+              <span className="tab-icon">🔁</span>
+              <span>Loop Activity</span>
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
@@ -1440,11 +1458,25 @@ const ActivityLogs = ({ addNotification }) => {
               />
             </div>
           </div>
+          {activityView === 'loop' && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Loop ID (optional)</label>
+                <input
+                  type="number"
+                  value={loopIdFilter}
+                  onChange={(e) => setLoopIdFilter(e.target.value)}
+                  placeholder="Filter by loop ID"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+            </div>
+          )}
           <div className="flex justify-end space-x-3">
             <button onClick={exportLogs} className="btn btn-secondary">
               📤 Export Logs (CSV)
             </button>
-            <button onClick={clearLogs} className="btn btn-danger" style={{marginLeft: '50px'}}>
+            <button onClick={clearLogs} className="btn btn-danger ml-12">
               🗑️ Clear Logs
             </button>
           </div>
