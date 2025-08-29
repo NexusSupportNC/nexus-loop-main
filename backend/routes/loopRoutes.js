@@ -35,6 +35,7 @@ router.put('/:id/compliance/deny', loopController.denyCompliance);
 router.get('/:id', loopController.getLoopById);
 router.put('/:id', uploadImages, loopController.updateLoop);
 router.get('/:id/export/pdf', loopController.exportPDF);
+router.get('/:id/activity', loopController.getLoopActivity);
 
 // Image routes (for debugging)
 router.get('/test-images', (req, res) => {
