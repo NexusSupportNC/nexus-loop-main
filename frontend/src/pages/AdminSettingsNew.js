@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { settingsAPI, adminAPI, loopAPI, apiUtils } from '../services/api';
 import { useConfirmation } from '../components/ConfirmationContext';
 import ProfileManagement from '../components/ProfileManagement';
@@ -42,7 +43,30 @@ const UserProfileImage = ({ user, size = 'w-8 h-8' }) => {
 };
 
 const AdminSettingsNew = ({ user, addNotification }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('system');
+
+  // Set active tab from query string if provided
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+      // Ensure viewport starts at top when navigating directly to a tab
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [location.search]);
+
+  // Keep URL in sync when switching tabs for shareable links
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (activeTab) {
+      params.set('tab', activeTab);
+      navigate({ search: params.toString() }, { replace: true });
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [activeTab]);
 
   // Tab configuration
   const tabs = [
@@ -110,6 +134,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
                 className={`settings-tab-horizontal group ${
                   activeTab === tab.id ? 'active' : ''
                 }`}
+                aria-current={activeTab === tab.id ? 'page' : undefined}
               >
                 <div className="settings-tab-horizontal-content">
                   <div className="settings-tab-horizontal-icon">
@@ -1040,7 +1065,7 @@ const UserManagement = ({ addNotification }) => {
                     onClick={() => togglePasswordVisibility('confirmPassword')}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
                   >
-                    {passwordVisibility.confirmPassword ? '🙈' : '👁️'}
+                    {passwordVisibility.confirmPassword ? '🙈' : '👁��'}
                   </button>
                 </div>
               </div>
