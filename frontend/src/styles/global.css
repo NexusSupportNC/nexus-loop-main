@@ -56,6 +56,14 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+html, body, .content {
+  overscroll-behavior: contain;
+}
+
+.content {
+  overflow-anchor: none;
+}
+
 /* Layout */
 .app-container {
   display: flex;
