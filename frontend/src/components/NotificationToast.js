@@ -68,7 +68,7 @@ const ToastItem = ({ notification, onRemove, zIndex }) => {
   };
 
   return (
-    <div className={`${getToastStyles()} pointer-events-auto`} style={{zIndex, width: '100%', maxWidth: '400px', flexDirection: 'column', display: 'flex', margin: '-807px 0 0 968px'}}>
+    <div className={`${getToastStyles()} pointer-events-auto`} style={{ zIndex, width: '100%', maxWidth: '400px' }}>
       <div className="toast-content">
         <div className="toast-icon">{getIcon()}</div>
         <div className="toast-message">
