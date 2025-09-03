@@ -79,7 +79,8 @@ const loopController = {
         sort: req.query.sort || 'created_at',
         order: req.query.order || 'desc',
         limit: req.query.limit ? parseInt(req.query.limit) : null,
-        archived: req.query.archived === 'true' ? true : false
+        archived: req.query.archived === 'true' ? true : false,
+        end_month: req.query.end_month
       };
 
       // If user is not admin, only show their loops
