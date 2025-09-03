@@ -119,6 +119,12 @@ export const settingsAPI = {
   updateNotificationPreferences: (preferences) => api.put('/settings/notifications', preferences)
 };
 
+// People API calls (all authenticated users)
+export const peopleAPI = {
+  getUsers: (params = {}) => api.get('/people', { params }),
+  getUserById: (id) => api.get(`/people/${id}`)
+};
+
 // Admin API calls
 export const adminAPI = {
   // User Management
