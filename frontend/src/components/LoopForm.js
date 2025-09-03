@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { dateUtils } from '../utils/dateUtils';
 import ImageUpload from './ImageUpload';
+import { peopleAPI, apiUtils } from '../services/api';
 
 const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false }) => {
   const [formData, setFormData] = useState({
@@ -24,6 +25,8 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
   const [showCustomTypeInput, setShowCustomTypeInput] = useState(false);
 
   const [errors, setErrors] = useState({});
+  const [allUsers, setAllUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
@@ -68,6 +71,25 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
       }
     }
   }, [initialData]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoadingUsers(true);
+        const res = await peopleAPI.getUsers();
+        if (res.data && res.data.success) {
+          // include admins and agents
+          setAllUsers(res.data.users || []);
+        }
+      } catch (error) {
+        // non-blocking; just leave list empty
+        console.warn('Failed to load users:', apiUtils.getErrorMessage(error));
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -433,6 +455,36 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
                     placeholder="Full name"
                     disabled={loading}
                   />
+                  <div className="mt-2">
+                    <label className="block text-xs text-gray-600 mb-1">Select Registered User (optional)</label>
+                    <select
+                      value={p._selectedUserId || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        if (!selectedId) {
+                          setFormData(prev => ({
+                            ...prev,
+                            participants: prev.participants.map((pp, i) => i === idx ? { ...pp, _selectedUserId: '' } : pp)
+                          }));
+                          return;
+                        }
+                        const user = allUsers.find(u => String(u.id) === String(selectedId));
+                        if (user) {
+                          setFormData(prev => ({
+                            ...prev,
+                            participants: prev.participants.map((pp, i) => i === idx ? { ...pp, _selectedUserId: String(user.id), name: user.name || pp.name, email: user.email || pp.email } : pp)
+                          }));
+                        }
+                      }}
+                      className="w-full px-2 py-1 border border-gray-300 rounded"
+                      disabled={loading || loadingUsers}
+                    >
+                      <option value="">-- Select a user --</option>
+                      {allUsers.map(u => (
+                        <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>Email</label>
@@ -475,7 +527,6 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
                   >
                     <option value="view">View-only</option>
                     <option value="edit">Edit</option>
-                    <option value="none">No access</option>
                   </select>
                 </div>
                 <div>
@@ -506,6 +557,7 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
               >
                 + Add Participant
               </button>
+              {loadingUsers && <p className="text-xs text-gray-500 mt-2">Loading users...</p>}
               <p className="text-xs text-gray-500 mt-2">Admins can view all loops regardless of access settings.</p>
             </div>
           </div>
