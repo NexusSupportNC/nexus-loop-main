@@ -32,14 +32,7 @@ const CreateLoop = ({ user, addNotification }) => {
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center space-x-4 mb-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            ← Back
-          </button>
-          <div className="h-6 w-px bg-gray-300"></div>
+        <div className="flex items-center mb-4">
           <div className="flex items-center">
             <Link to={user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/agent'} className="btn btn-outline btn-sm">
               Back to Dashboard / Create New Loop
