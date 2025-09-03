@@ -4,13 +4,45 @@ import { loopAPI, apiUtils } from '../services/api';
 import { dateUtils } from '../utils/dateUtils';
 import ImageGallery from './ImageGallery';
 
+const uiStatusOptions = [
+  { key: '', label: 'No Status' },
+  { key: 'pre-listing', label: 'Pre-Listing' },
+  { key: 'private-listing', label: 'Private Listing' },
+  { key: 'active-listing', label: 'Active Listing' },
+  { key: 'under-contract', label: 'Under Contract' },
+  { key: 'withdrawn', label: 'Withdrawn' },
+  { key: 'sold', label: 'Sold' },
+  { key: 'terminated', label: 'Terminated' },
+  { key: 'leased', label: 'Leased' },
+  { key: 'pre-offer', label: 'Pre-Offer' },
+  { key: 'new', label: 'New' },
+  { key: 'in-progress', label: 'In-Progress' },
+  { key: 'done', label: 'Done' }
+];
+
+const uiStatusToApi = {
+  '': '',
+  'pre-listing': 'active',
+  'private-listing': 'active',
+  'active-listing': 'active',
+  'under-contract': 'under-contract',
+  'withdrawn': 'withdrawn',
+  'sold': 'sold',
+  'terminated': 'terminated',
+  'leased': 'closed',
+  'pre-offer': 'pre-offer',
+  'new': 'active',
+  'in-progress': 'closing',
+  'done': 'closed'
+};
+
 const LoopList = ({ user, addNotification, filters = {} }) => {
   const [loops, setLoops] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Toolbar state
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(''); // stores UI key
   const [typeFilter, setTypeFilter] = useState('');
   const [closingThisMonth, setClosingThisMonth] = useState(false);
 
@@ -24,13 +56,16 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
 
   // Additional review/compliance filters (client-side)
   const [reviewFilters, setReviewFilters] = useState({
-    reviewStage: '', // unsubmitted
-    listingContract: [], // returned_to_agent, listing_documents, need_review, closed, approved_for_commission, listing_approved, terminated
-    buyingContract: [] // returned_to_agent, contract_documents, need_review, closed, approved_for_commission, listing_approved, terminated
+    reviewStage: '',
+    listingContract: [],
+    buyingContract: []
   });
 
   // Fields that API supports for sorting
   const apiSortableFields = new Set(['created_at', 'updated_at', 'end_date', 'sale', 'status', 'type']);
+
+  const appliedStatusApi = uiStatusToApi[statusFilter] ?? '';
+  const appliedTypeApi = (typeFilter === 'No Transaction Type') ? '' : typeFilter;
 
   const fetchLoops = async () => {
     try {
@@ -39,8 +74,8 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
       // Determine API params
       const baseParams = {
         search: searchTerm || '',
-        status: statusFilter || '',
-        type: typeFilter || '',
+        status: appliedStatusApi || '',
+        type: appliedTypeApi || '',
         sort: apiSortableFields.has(sortBy) ? sortBy : 'created_at',
         order: apiSortableFields.has(sortBy) ? (sortOrder || 'desc') : 'desc',
         end_month: closingThisMonth ? 'current' : undefined
@@ -49,14 +84,12 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
       let results = [];
 
       if (archivedMode === 'all') {
-        // Fetch both archived and active, merge
         const [activeRes, archivedRes] = await Promise.all([
           loopAPI.getLoops({ ...baseParams, archived: 'false' }),
           loopAPI.getLoops({ ...baseParams, archived: 'true' })
         ]);
         if (activeRes.data.success) results = results.concat(activeRes.data.loops);
         if (archivedRes.data.success) results = results.concat(archivedRes.data.loops);
-        // Deduplicate by id
         const map = new Map();
         for (const l of results) map.set(l.id, l);
         results = Array.from(map.values());
@@ -92,11 +125,9 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
 
       // Client-side compliance/review filters
       const filtered = results.filter((loop) => {
-        // Review Stage: Unsubmitted
         if (reviewFilters.reviewStage === 'unsubmitted') {
           if (loop.compliance_status && loop.compliance_status !== 'none') return false;
         }
-        // Listing/Contract review tags
         const lc = new Set(reviewFilters.listingContract);
         const bc = new Set(reviewFilters.buyingContract);
         const byCompliance = (tagSet) => {
@@ -104,7 +135,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
           if (tagSet.has('approved_for_commission') || tagSet.has('listing_approved')) return loop.compliance_status === 'approved';
           if (tagSet.has('returned_to_agent') || tagSet.has('terminated')) return loop.compliance_status === 'denied' || loop.status === 'terminated';
           if (tagSet.has('closed')) return loop.status === 'closed';
-          if (tagSet.has('listing_documents') || tagSet.has('contract_documents')) return true; // informational only
+          if (tagSet.has('listing_documents') || tagSet.has('contract_documents')) return true;
           return true;
         };
         if (reviewFilters.listingContract.length > 0 && !byCompliance(lc)) return false;
@@ -253,35 +284,17 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
   const renderToolbar = () => (
     <div className="flex flex-wrap items-end gap-4">
       <div className="min-w-[220px]">
-        <label htmlFor="ll-search" className="block text-sm font-medium text-gray-700 mb-1">
-          Search
-        </label>
-        <input
-          id="ll-search"
-          type="text"
-          placeholder="Search loops..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-        />
+        <label htmlFor="ll-search" className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+        <input id="ll-search" type="text" placeholder="Search loops..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm" />
       </div>
 
       <div className="min-w-[180px]">
-        <label htmlFor="ll-status" className="block text-sm font-medium text-gray-700 mb-1">
-          Status
-        </label>
-        <select
-          id="ll-status"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-        >
+        <label htmlFor="ll-status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        <select id="ll-status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
           <option value="">All Statuses</option>
-          <option value="pre-offer">Pre-offer</option>
-          <option value="under-contract">Under Contract</option>
-          <option value="withdrawn">Withdrawn</option>
-          <option value="sold">Sold</option>
-          <option value="terminated">Terminated</option>
+          {uiStatusOptions.filter(o=>o.key).map(o => (
+            <option key={o.key} value={o.key}>{o.label}</option>
+          ))}
           <option value="active">Active</option>
           <option value="closing">Closing</option>
           <option value="closed">Closed</option>
@@ -290,15 +303,8 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
       </div>
 
       <div className="min-w-[200px]">
-        <label htmlFor="ll-type" className="block text-sm font-medium text-gray-700 mb-1">
-          Type
-        </label>
-        <select
-          id="ll-type"
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-        >
+        <label htmlFor="ll-type" className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+        <select id="ll-type" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
           <option value="">All Types</option>
           <option value="No Transaction Type">No Transaction Type</option>
           <option value="Listing for Sale">Listing for Sale</option>
@@ -311,19 +317,8 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
       </div>
 
       <div className="min-w-[220px]">
-        <label htmlFor="ll-sort" className="block text-sm font-medium text-gray-700 mb-1">
-          Sort By
-        </label>
-        <select
-          id="ll-sort"
-          value={`${sortBy}-${sortOrder}`}
-          onChange={(e) => {
-            const [field, order] = e.target.value.split('-');
-            setSortBy(field);
-            setSortOrder(order);
-          }}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-        >
+        <label htmlFor="ll-sort" className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+        <select id="ll-sort" value={`${sortBy}-${sortOrder}`} onChange={(e) => { const [field, order] = e.target.value.split('-'); setSortBy(field); setSortOrder(order); }} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
           <option value="created_at-desc">Creation date (newest)</option>
           <option value="created_at-asc">Creation date (oldest)</option>
           <option value="updated_at-desc">Last updated (newest)</option>
@@ -351,6 +346,37 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
         <button onClick={() => setViewMode('grid')} className={`btn btn-sm ${viewMode==='grid' ? 'btn-primary' : 'btn-outline'}`}>Grid</button>
         <button onClick={() => setViewMode('compact')} className={`btn btn-sm ${viewMode==='compact' ? 'btn-primary' : 'btn-outline'}`}>Compact</button>
       </div>
+
+      {(searchTerm || statusFilter || typeFilter || closingThisMonth || archivedMode!=='hide' || reviewFilters.reviewStage || reviewFilters.listingContract.length || reviewFilters.buyingContract.length) && (
+        <div className="w-full mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-gray-500">Active filters:</span>
+          {searchTerm && (
+            <button className="filter-chip" onClick={()=>setSearchTerm('')}>Search: {searchTerm}<span className="filter-chip-close">×</span></button>
+          )}
+          {statusFilter && (
+            <button className="filter-chip" onClick={()=>setStatusFilter('')}>Status: {uiStatusOptions.find(o=>o.key===statusFilter)?.label || statusFilter}<span className="filter-chip-close">×</span></button>
+          )}
+          {typeFilter && (
+            <button className="filter-chip" onClick={()=>setTypeFilter('')}>Type: {typeFilter}<span className="filter-chip-close">×</span></button>
+          )}
+          {closingThisMonth && (
+            <button className="filter-chip" onClick={()=>setClosingThisMonth(false)}>Closing this month<span className="filter-chip-close">×</span></button>
+          )}
+          {archivedMode!=='hide' && (
+            <button className="filter-chip" onClick={()=>setArchivedMode('hide')}>Archived: {archivedMode}<span className="filter-chip-close">×</span></button>
+          )}
+          {reviewFilters.reviewStage==='unsubmitted' && (
+            <button className="filter-chip" onClick={()=>setReviewFilters(prev=>({...prev, reviewStage: ''}))}>Review: Unsubmitted<span className="filter-chip-close">×</span></button>
+          )}
+          {reviewFilters.listingContract.length>0 && (
+            <button className="filter-chip" onClick={()=>setReviewFilters(prev=>({...prev, listingContract: []}))}>Listing/Contract: {reviewFilters.listingContract.length} selected<span className="filter-chip-close">×</span></button>
+          )}
+          {reviewFilters.buyingContract.length>0 && (
+            <button className="filter-chip" onClick={()=>setReviewFilters(prev=>({...prev, buyingContract: []}))}>Buying/Contract: {reviewFilters.buyingContract.length} selected<span className="filter-chip-close">×</span></button>
+          )}
+          <button className="btn btn-sm btn-outline ml-auto" onClick={()=>{setSearchTerm('');setStatusFilter('');setTypeFilter('');setClosingThisMonth(false);setArchivedMode('hide');setReviewFilters({reviewStage:'',listingContract:[],buyingContract:[]});}}>Clear all</button>
+        </div>
+      )}
     </div>
   );
 
@@ -469,9 +495,14 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Filters sidebar */}
-        <aside className="card lg:col-span-1">
+        <aside className="card lg:col-span-1 filters-sticky">
           <div className="card-header"><h3 className="text-lg font-semibold">Filters</h3></div>
           <div className="card-body space-y-6">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Refine your results</span>
+              <button className="btn btn-sm btn-outline" onClick={()=>{setSearchTerm('');setStatusFilter('');setTypeFilter('');setClosingThisMonth(false);setArchivedMode('hide');setReviewFilters({reviewStage:'',listingContract:[],buyingContract:[]});}}>Clear all</button>
+            </div>
+
             {/* Archived */}
             <div>
               <div className="text-sm font-semibold text-gray-700 mb-2">Archived</div>
@@ -499,9 +530,9 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
             <div>
               <div className="text-sm font-semibold text-gray-700 mb-2">Loop Status</div>
               <div className="space-y-2">
-                {['No Status','Pre-Listing','Private Listing','Active Listing','Under Contract','Withdrawn','Sold','Terminated','Leased','Pre-Offer','New','In-Progress','Done'].map((s) => (
-                  <label key={s} className="flex items-center gap-2 text-sm">
-                    <input type="radio" name="statusFilter" checked={statusFilter===s.toLowerCase().replace(' ', '-')} onChange={()=>setStatusFilter(s.toLowerCase().replace(' ', '-'))} /> {s}
+                {uiStatusOptions.map((opt) => (
+                  <label key={opt.key || 'none'} className="flex items-center gap-2 text-sm">
+                    <input type="radio" name="statusFilter" checked={statusFilter===opt.key} onChange={()=>setStatusFilter(opt.key)} /> {opt.label}
                   </label>
                 ))}
                 <button className="text-xs text-gray-500 underline" onClick={()=>setStatusFilter('')}>Clear</button>
