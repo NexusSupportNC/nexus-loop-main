@@ -1361,6 +1361,11 @@ footer {
   padding: 16px;
 }
 
+/* Prevent browser scroll anchoring from jumping the page when UI above changes (e.g., toasts) */
+html, body, .content, .dashboard-container {
+  overflow-anchor: none;
+}
+
 footer a {
   text-decoration: underline;
   transition: all 0.2s ease;
