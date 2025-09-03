@@ -10,6 +10,7 @@ import AdminSettings from './pages/AdminSettingsNew';
 import Archive from './pages/Archive';
 import ProfileSettings from './pages/ProfileSettings';
 import People from './pages/People';
+import AllLoops from './pages/AllLoops';
 import ScrollToTop from './components/ScrollToTop';
 import NotificationToast from './components/NotificationToast';
 import { NotificationProvider, useNotifications } from './components/NotificationContext';
@@ -225,6 +226,20 @@ const AppContent = () => {
                 element={
                   user?.role === 'admin' ? (
                     <Archive
+                      user={user}
+                      addNotification={addNotification}
+                    />
+                  ) : (
+                    <Navigate to="/dashboard/agent" replace />
+                  )
+                }
+              />
+
+              <Route
+                path="/loops/all"
+                element={
+                  user?.role === 'admin' ? (
+                    <AllLoops
                       user={user}
                       addNotification={addNotification}
                     />
