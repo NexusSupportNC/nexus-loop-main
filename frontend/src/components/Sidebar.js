@@ -78,8 +78,12 @@ const Sidebar = ({ user, onLogout, collapsed, onToggle, isMobile, onNavigate }) 
       path: '/people',
       icon: '👥'
     },
-    // Admin-only archive
+    // Admin-only All Loops and Archive
     ...(user?.role === 'admin' ? [{
+      name: 'All Loops',
+      path: '/loops/all',
+      icon: '📋'
+    },{
       name: 'Archive',
       path: '/archive',
       icon: '📦'
