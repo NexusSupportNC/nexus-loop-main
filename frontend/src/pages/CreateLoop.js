@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import LoopForm from '../components/LoopForm';
 import { loopAPI, apiUtils } from '../services/api';
 
@@ -40,11 +40,11 @@ const CreateLoop = ({ user, addNotification }) => {
             ← Back
           </button>
           <div className="h-6 w-px bg-gray-300"></div>
-          <nav className="text-sm text-gray-600">
-            <span>Dashboard</span>
-            <span className="mx-2">/</span>
-            <span className="text-gray-900 font-medium">Create New Loop</span>
-          </nav>
+          <div className="flex items-center">
+            <Link to={user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/agent'} className="btn btn-outline btn-sm">
+              Dashboard / Create New Loop
+            </Link>
+          </div>
         </div>
         
         <div>
@@ -63,12 +63,12 @@ const CreateLoop = ({ user, addNotification }) => {
             <div className="text-3xl">💡</div>
             <div>
               <h3 className="font-semibold text-gray-900 mb-2">Getting Started</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Fill in the transaction type and property details</li>
-                <li>• Add client information for communication</li>
-                <li>• Set target dates to track progress</li>
-                <li>• Use tags to categorize and organize your loops</li>
-                <li>• Add notes for important details or reminders</li>
+              <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                <li>Fill in the transaction type and property details</li>
+                <li>Add client information for communication</li>
+                <li>Set target dates to track progress</li>
+                <li>Use tags to categorize and organize your loops</li>
+                <li>Add notes for important details or reminders</li>
               </ul>
             </div>
           </div>
@@ -89,20 +89,20 @@ const CreateLoop = ({ user, addNotification }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div>
               <h4 className="font-medium text-gray-900 mb-2">Transaction Types</h4>
-              <ul className="text-gray-600 space-y-1">
-                <li>• <strong>Purchase:</strong> Buyer acquiring property</li>
-                <li>• <strong>Sale:</strong> Seller listing property</li>
-                <li>• <strong>Lease:</strong> Rental agreements</li>
-                <li>• <strong>Refinance:</strong> Loan refinancing</li>
+              <ul className="text-gray-600 space-y-1 list-disc list-inside">
+                <li><strong>Purchase:</strong> Buyer acquiring property</li>
+                <li><strong>Sale:</strong> Seller listing property</li>
+                <li><strong>Lease:</strong> Rental agreements</li>
+                <li><strong>Refinance:</strong> Loan refinancing</li>
               </ul>
             </div>
             <div>
               <h4 className="font-medium text-gray-900 mb-2">Status Meanings</h4>
-              <ul className="text-gray-600 space-y-1">
-                <li>• <strong>Active:</strong> Transaction in progress</li>
-                <li>• <strong>Closing:</strong> Near completion</li>
-                <li>• <strong>Closed:</strong> Successfully completed</li>
-                <li>• <strong>Cancelled:</strong> Transaction terminated</li>
+              <ul className="text-gray-600 space-y-1 list-disc list-inside">
+                <li><strong>Active:</strong> Transaction in progress</li>
+                <li><strong>Closing:</strong> Near completion</li>
+                <li><strong>Closed:</strong> Successfully completed</li>
+                <li><strong>Cancelled:</strong> Transaction terminated</li>
               </ul>
             </div>
           </div>
