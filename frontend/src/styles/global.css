@@ -2879,6 +2879,24 @@ tr:hover {
 .text-left { text-align: left; }
 .text-right { text-align: right; }
 
+/* Filter chips */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.filter-chip:hover { border-color: #3b82f6; color: var(--text-primary); }
+.filter-chip-close { margin-left: 2px; font-weight: 700; }
+
+/* Sticky filters */
+.filters-sticky { position: sticky; top: 16px; }
+
 /* Gradient backgrounds */
 .gradient-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
 .gradient-green { background: linear-gradient(135deg, #10b981, #047857); }
