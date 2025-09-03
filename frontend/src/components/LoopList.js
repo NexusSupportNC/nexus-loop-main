@@ -61,6 +61,10 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     buyingContract: []
   });
 
+  // UI state for collapsible sections
+  const [showListingReview, setShowListingReview] = useState(false);
+  const [showBuyingReview, setShowBuyingReview] = useState(false);
+
   // Fields that API supports for sorting
   const apiSortableFields = new Set(['created_at', 'updated_at', 'end_date', 'sale', 'status', 'type']);
 
@@ -495,102 +499,125 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Filters sidebar */}
-        <aside className="card lg:col-span-1 filters-sticky">
+        <aside className="card lg:col-span-1 filters-sticky filters-compact">
           <div className="card-header"><h3 className="text-lg font-semibold">Filters</h3></div>
-          <div className="card-body space-y-6">
+          <div className="card-body space-y-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Refine your results</span>
+              <span className="text-xs text-gray-600">Refine your results</span>
               <button className="btn btn-sm btn-outline" onClick={()=>{setSearchTerm('');setStatusFilter('');setTypeFilter('');setClosingThisMonth(false);setArchivedMode('hide');setReviewFilters({reviewStage:'',listingContract:[],buyingContract:[]});}}>Clear all</button>
             </div>
 
             {/* Archived */}
-            <div>
-              <div className="text-sm font-semibold text-gray-700 mb-2">Archived</div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm"><input type="radio" name="archived" checked={archivedMode==='hide'} onChange={()=>setArchivedMode('hide')} /> Hide Archived</label>
-                <label className="flex items-center gap-2 text-sm"><input type="radio" name="archived" checked={archivedMode==='only'} onChange={()=>setArchivedMode('only')} /> Only Archived</label>
-                <label className="flex items-center gap-2 text-sm"><input type="radio" name="archived" checked={archivedMode==='all'} onChange={()=>setArchivedMode('all')} /> All</label>
+            <div className="filter-section">
+              <div className="filter-section-title">Archived</div>
+              <div className="segmented-control">
+                <button type="button" className={`segmented-option ${archivedMode==='hide' ? 'active' : ''}`} onClick={()=>setArchivedMode('hide')}>Hide</button>
+                <button type="button" className={`segmented-option ${archivedMode==='only' ? 'active' : ''}`} onClick={()=>setArchivedMode('only')}>Only</button>
+                <button type="button" className={`segmented-option ${archivedMode==='all' ? 'active' : ''}`} onClick={()=>setArchivedMode('all')}>All</button>
               </div>
             </div>
 
             {/* Loop Type */}
-            <div>
-              <div className="text-sm font-semibold text-gray-700 mb-2">Loop Type</div>
-              <div className="space-y-2">
+            <div className="filter-section">
+              <div className="filter-section-title">Loop Type</div>
+              <div className="filter-pills-grid">
                 {['No Transaction Type','Listing for Sale','Listing for Lease','Purchase','Lease','Real Estate Other','Other'].map((t) => (
-                  <label key={t} className="flex items-center gap-2 text-sm">
-                    <input type="radio" name="typeFilter" checked={typeFilter===t} onChange={()=>setTypeFilter(t)} /> {t}
-                  </label>
+                  <button
+                    key={t}
+                    type="button"
+                    className={`filter-pill ${typeFilter===t ? 'active' : ''}`}
+                    onClick={()=> setTypeFilter(prev => prev===t ? '' : t)}
+                  >{t}</button>
                 ))}
-                <button className="text-xs text-gray-500 underline" onClick={()=>setTypeFilter('')}>Clear</button>
               </div>
+              <button className="filter-clear" onClick={()=>setTypeFilter('')}>Clear</button>
             </div>
 
             {/* Loop Status */}
-            <div>
-              <div className="text-sm font-semibold text-gray-700 mb-2">Loop Status</div>
-              <div className="space-y-2">
+            <div className="filter-section">
+              <div className="filter-section-title">Loop Status</div>
+              <div className="filter-pills-grid">
                 {uiStatusOptions.map((opt) => (
-                  <label key={opt.key || 'none'} className="flex items-center gap-2 text-sm">
-                    <input type="radio" name="statusFilter" checked={statusFilter===opt.key} onChange={()=>setStatusFilter(opt.key)} /> {opt.label}
-                  </label>
+                  <button
+                    key={opt.key || 'none'}
+                    type="button"
+                    className={`filter-pill ${statusFilter===opt.key ? 'active' : ''}`}
+                    onClick={()=> setStatusFilter(prev => prev===opt.key ? '' : opt.key)}
+                  >{opt.label}</button>
                 ))}
-                <button className="text-xs text-gray-500 underline" onClick={()=>setStatusFilter('')}>Clear</button>
               </div>
+              <button className="filter-clear" onClick={()=>setStatusFilter('')}>Clear</button>
             </div>
 
             {/* Review Stage */}
-            <div>
-              <div className="text-sm font-semibold text-gray-700 mb-2">Review Stage</div>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={reviewFilters.reviewStage==='unsubmitted'} onChange={(e)=>setReviewFilters(prev=>({...prev, reviewStage: e.target.checked ? 'unsubmitted' : ''}))} /> Unsubmitted
+            <div className="filter-section">
+              <div className="filter-section-title">Review Stage</div>
+              <label className="filter-check-row">
+                <input type="checkbox" className="control-xs" checked={reviewFilters.reviewStage==='unsubmitted'} onChange={(e)=>setReviewFilters(prev=>({...prev, reviewStage: e.target.checked ? 'unsubmitted' : ''}))} />
+                <span>Unsubmitted</span>
               </label>
             </div>
 
             {/* Listing/Contract Review */}
-            <div>
-              <div className="text-sm font-semibold text-gray-700 mb-2">LISTING/CONTRACT REVIEW</div>
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  ['returned_to_agent','Returned to agent'],
-                  ['listing_documents','Listing Documents'],
-                  ['need_review','Need Review'],
-                  ['closed','Closed'],
-                  ['approved_for_commission','Approved for Commission'],
-                  ['listing_approved','Listing Approved'],
-                  ['terminated','Terminated']
-                ].map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={reviewFilters.listingContract.includes(key)} onChange={(e)=>setReviewFilters(prev=>({
-                      ...prev,
-                      listingContract: e.target.checked ? [...prev.listingContract, key] : prev.listingContract.filter(k=>k!==key)
-                    }))} /> {label}
-                  </label>
-                ))}
-              </div>
+            <div className="accordion-section">
+              <button type="button" className="accordion-header" onClick={()=>setShowListingReview(v=>!v)}>
+                <span>LISTING/CONTRACT REVIEW</span>
+                <span className={`accordion-chevron ${showListingReview ? 'open' : ''}`}>▾</span>
+              </button>
+              {showListingReview && (
+                <div className="accordion-content">
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      ['returned_to_agent','Returned to agent'],
+                      ['listing_documents','Listing Documents'],
+                      ['need_review','Need Review'],
+                      ['closed','Closed'],
+                      ['approved_for_commission','Approved for Commission'],
+                      ['listing_approved','Listing Approved'],
+                      ['terminated','Terminated']
+                    ].map(([key, label]) => (
+                      <label key={key} className="filter-check-row">
+                        <input type="checkbox" className="control-xs" checked={reviewFilters.listingContract.includes(key)} onChange={(e)=>setReviewFilters(prev=>({
+                          ...prev,
+                          listingContract: e.target.checked ? [...prev.listingContract, key] : prev.listingContract.filter(k=>k!==key)
+                        }))} />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Buying/Contract Review */}
-            <div>
-              <div className="text-sm font-semibold text-gray-700 mb-2">Buying/Contract Review</div>
-              <div className="grid grid-cols-1 gap-2">
-                {[
-                  ['returned_to_agent','Returned to Agent'],
-                  ['contract_documents','Contract Documents'],
-                  ['need_review','Need Review'],
-                  ['closed','Closed'],
-                  ['approved_for_commission','Approved for Commission'],
-                  ['listing_approved','Listing Approved'],
-                  ['terminated','Terminated']
-                ].map(([key, label]) => (
-                  <label key={key} className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={reviewFilters.buyingContract.includes(key)} onChange={(e)=>setReviewFilters(prev=>({
-                      ...prev,
-                      buyingContract: e.target.checked ? [...prev.buyingContract, key] : prev.buyingContract.filter(k=>k!==key)
-                    }))} /> {label}
-                  </label>
-                ))}
-              </div>
+            <div className="accordion-section">
+              <button type="button" className="accordion-header" onClick={()=>setShowBuyingReview(v=>!v)}>
+                <span>Buying/Contract Review</span>
+                <span className={`accordion-chevron ${showBuyingReview ? 'open' : ''}`}>▾</span>
+              </button>
+              {showBuyingReview && (
+                <div className="accordion-content">
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      ['returned_to_agent','Returned to Agent'],
+                      ['contract_documents','Contract Documents'],
+                      ['need_review','Need Review'],
+                      ['closed','Closed'],
+                      ['approved_for_commission','Approved for Commission'],
+                      ['listing_approved','Listing Approved'],
+                      ['terminated','Terminated']
+                    ].map(([key, label]) => (
+                      <label key={key} className="filter-check-row">
+                        <input type="checkbox" className="control-xs" checked={reviewFilters.buyingContract.includes(key)} onChange={(e)=>setReviewFilters(prev=>({
+                          ...prev,
+                          buyingContract: e.target.checked ? [...prev.buyingContract, key] : prev.buyingContract.filter(k=>k!==key)
+                        }))} />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </aside>
