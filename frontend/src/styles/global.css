@@ -1211,7 +1211,7 @@ body {
 
 @media (max-width: 991px) {
   .sidebar {
-    margin-bottom: -637px;
+    margin-bottom: 0;
   }
 
   .sidebar .user-info {
@@ -1361,10 +1361,6 @@ footer {
   padding: 16px;
 }
 
-/* Prevent browser scroll anchoring from jumping the page when UI above changes (e.g., toasts) */
-html, body, .content, .dashboard-container {
-  overflow-anchor: none;
-}
 
 footer a {
   text-decoration: underline;
