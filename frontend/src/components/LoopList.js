@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { loopAPI, apiUtils } from '../services/api';
 import { dateUtils } from '../utils/dateUtils';
@@ -7,65 +7,126 @@ import ImageGallery from './ImageGallery';
 const LoopList = ({ user, addNotification, filters = {} }) => {
   const [loops, setLoops] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Toolbar state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
   const [closingThisMonth, setClosingThisMonth] = useState(false);
 
-  useEffect(() => {
-    const fetchLoops = async () => {
-      try {
-        setLoading(true);
-        const params = {
-          search: searchTerm || '',
-          status: statusFilter || '',
-          type: typeFilter || '',
-          sort: sortBy || 'created_at',
-          order: sortOrder || 'desc',
-          end_month: closingThisMonth ? 'current' : undefined
-        };
+  // View and sort state
+  const [viewMode, setViewMode] = useState('list'); // list | grid | compact
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
 
-        const response = await loopAPI.getLoops(params);
+  // Archived filter: hide (default), only, all
+  const [archivedMode, setArchivedMode] = useState('hide');
 
-        if (response.data.success) {
-          setLoops(response.data.loops);
-        }
-      } catch (error) {
-        const errorMessage = apiUtils.getErrorMessage(error);
-        addNotification(errorMessage, 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Additional review/compliance filters (client-side)
+  const [reviewFilters, setReviewFilters] = useState({
+    reviewStage: '', // unsubmitted
+    listingContract: [], // returned_to_agent, listing_documents, need_review, closed, approved_for_commission, listing_approved, terminated
+    buyingContract: [] // returned_to_agent, contract_documents, need_review, closed, approved_for_commission, listing_approved, terminated
+  });
 
-    fetchLoops();
-  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, addNotification]);
+  // Fields that API supports for sorting
+  const apiSortableFields = new Set(['created_at', 'updated_at', 'end_date', 'sale', 'status', 'type']);
 
-  const refreshLoops = async () => {
+  const fetchLoops = async () => {
     try {
       setLoading(true);
-      const params = {
+
+      // Determine API params
+      const baseParams = {
         search: searchTerm || '',
         status: statusFilter || '',
         type: typeFilter || '',
-        sort: sortBy || 'created_at',
-        order: sortOrder || 'desc',
+        sort: apiSortableFields.has(sortBy) ? sortBy : 'created_at',
+        order: apiSortableFields.has(sortBy) ? (sortOrder || 'desc') : 'desc',
         end_month: closingThisMonth ? 'current' : undefined
       };
 
-      const response = await loopAPI.getLoops(params);
+      let results = [];
 
-      if (response.data.success) {
-        setLoops(response.data.loops);
+      if (archivedMode === 'all') {
+        // Fetch both archived and active, merge
+        const [activeRes, archivedRes] = await Promise.all([
+          loopAPI.getLoops({ ...baseParams, archived: 'false' }),
+          loopAPI.getLoops({ ...baseParams, archived: 'true' })
+        ]);
+        if (activeRes.data.success) results = results.concat(activeRes.data.loops);
+        if (archivedRes.data.success) results = results.concat(archivedRes.data.loops);
+        // Deduplicate by id
+        const map = new Map();
+        for (const l of results) map.set(l.id, l);
+        results = Array.from(map.values());
+      } else {
+        const res = await loopAPI.getLoops({ ...baseParams, archived: archivedMode === 'only' ? 'true' : 'false' });
+        if (res.data.success) results = res.data.loops;
       }
+
+      // Client-side extra sorting when needed
+      if (!apiSortableFields.has(sortBy)) {
+        results.sort((a, b) => {
+          const dir = sortOrder === 'asc' ? 1 : -1;
+          const get = (obj, key) => {
+            switch (key) {
+              case 'start_date': return obj.start_date || '';
+              case 'compliance_requested_at': return obj.compliance_requested_at || '';
+              case 'creator_name': return (obj.creator_name || '').toLowerCase();
+              default: return obj[key];
+            }
+          };
+          const av = get(a, sortBy);
+          const bv = get(b, sortBy);
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          if (!isNaN(Date.parse(av)) && !isNaN(Date.parse(bv))) {
+            return (new Date(av) - new Date(bv)) * dir;
+          }
+          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+          return (av > bv ? 1 : av < bv ? -1 : 0) * dir;
+        });
+      }
+
+      // Client-side compliance/review filters
+      const filtered = results.filter((loop) => {
+        // Review Stage: Unsubmitted
+        if (reviewFilters.reviewStage === 'unsubmitted') {
+          if (loop.compliance_status && loop.compliance_status !== 'none') return false;
+        }
+        // Listing/Contract review tags
+        const lc = new Set(reviewFilters.listingContract);
+        const bc = new Set(reviewFilters.buyingContract);
+        const byCompliance = (tagSet) => {
+          if (tagSet.has('need_review')) return loop.compliance_status === 'pending';
+          if (tagSet.has('approved_for_commission') || tagSet.has('listing_approved')) return loop.compliance_status === 'approved';
+          if (tagSet.has('returned_to_agent') || tagSet.has('terminated')) return loop.compliance_status === 'denied' || loop.status === 'terminated';
+          if (tagSet.has('closed')) return loop.status === 'closed';
+          if (tagSet.has('listing_documents') || tagSet.has('contract_documents')) return true; // informational only
+          return true;
+        };
+        if (reviewFilters.listingContract.length > 0 && !byCompliance(lc)) return false;
+        if (reviewFilters.buyingContract.length > 0 && !byCompliance(bc)) return false;
+        return true;
+      });
+
+      setLoops(filtered);
     } catch (error) {
       const errorMessage = apiUtils.getErrorMessage(error);
       addNotification(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchLoops();
+  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, archivedMode, reviewFilters]);
+
+  const refreshLoops = async () => {
+    await fetchLoops();
   };
 
   const handleDelete = async (loopId) => {
@@ -189,202 +250,355 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Filters and Search */}
-      <div className="card">
-        <div className="card-body">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Quick Filter
-              </label>
-              <div className="flex items-center gap-2">
-                <input id="closing_month" type="checkbox" className="h-4 w-4" checked={closingThisMonth} onChange={(e)=>setClosingThisMonth(e.target.checked)} />
-                <label htmlFor="closing_month" className="text-sm">Closing this month</label>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
-                Search
-              </label>
-              <input
-                id="search"
-                type="text"
-                placeholder="Search loops..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                id="status"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="">All Statuses</option>
-                <option value="pre-offer">Pre-offer</option>
-                <option value="under-contract">Under Contract</option>
-                <option value="withdrawn">Withdrawn</option>
-                <option value="sold">Sold</option>
-                <option value="terminated">Terminated</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                Type
-              </label>
-              <select
-                id="type"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="">All Types</option>
-                <option value="Listing for Sale">Listing for Sale</option>
-                <option value="Listing for Lease">Listing for Lease</option>
-                <option value="Purchase">Purchase</option>
-                <option value="Lease">Lease</option>
-                <option value="Real Estate Other">Real Estate Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="sort" className="block text-sm font-medium text-gray-700 mb-1">
-                Sort By
-              </label>
-              <select
-                id="sort"
-                value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
-                  const [field, order] = e.target.value.split('-');
-                  setSortBy(field);
-                  setSortOrder(order);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="created_at-desc">Newest First</option>
-                <option value="created_at-asc">Oldest First</option>
-                <option value="end_date-asc">End Date (Earliest)</option>
-                <option value="end_date-desc">End Date (Latest)</option>
-                <option value="sale-desc">Sale Amount (High to Low)</option>
-                <option value="sale-asc">Sale Amount (Low to High)</option>
-              </select>
-            </div>
-          </div>
-        </div>
+  const renderToolbar = () => (
+    <div className="flex flex-wrap items-end gap-4">
+      <div className="min-w-[220px]">
+        <label htmlFor="ll-search" className="block text-sm font-medium text-gray-700 mb-1">
+          Search
+        </label>
+        <input
+          id="ll-search"
+          type="text"
+          placeholder="Search loops..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        />
       </div>
 
-      {/* Loops List */}
-      {loops.length === 0 ? (
-        <div className="card">
-          <div className="card-body text-center py-12">
-            <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No loops found</h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || statusFilter || typeFilter
-                ? 'Try adjusting your filters to see more results.'
-                : 'Get started by creating your first transaction loop.'}
-            </p>
-            <Link to="/loops/new" className="btn btn-primary">
-              Create New Loop
-            </Link>
+      <div className="min-w-[180px]">
+        <label htmlFor="ll-status" className="block text-sm font-medium text-gray-700 mb-1">
+          Status
+        </label>
+        <select
+          id="ll-status"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        >
+          <option value="">All Statuses</option>
+          <option value="pre-offer">Pre-offer</option>
+          <option value="under-contract">Under Contract</option>
+          <option value="withdrawn">Withdrawn</option>
+          <option value="sold">Sold</option>
+          <option value="terminated">Terminated</option>
+          <option value="active">Active</option>
+          <option value="closing">Closing</option>
+          <option value="closed">Closed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <div className="min-w-[200px]">
+        <label htmlFor="ll-type" className="block text-sm font-medium text-gray-700 mb-1">
+          Type
+        </label>
+        <select
+          id="ll-type"
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        >
+          <option value="">All Types</option>
+          <option value="No Transaction Type">No Transaction Type</option>
+          <option value="Listing for Sale">Listing for Sale</option>
+          <option value="Listing for Lease">Listing for Lease</option>
+          <option value="Purchase">Purchase</option>
+          <option value="Lease">Lease</option>
+          <option value="Real Estate Other">Real Estate Other</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div className="min-w-[220px]">
+        <label htmlFor="ll-sort" className="block text-sm font-medium text-gray-700 mb-1">
+          Sort By
+        </label>
+        <select
+          id="ll-sort"
+          value={`${sortBy}-${sortOrder}`}
+          onChange={(e) => {
+            const [field, order] = e.target.value.split('-');
+            setSortBy(field);
+            setSortOrder(order);
+          }}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        >
+          <option value="created_at-desc">Creation date (newest)</option>
+          <option value="created_at-asc">Creation date (oldest)</option>
+          <option value="updated_at-desc">Last updated (newest)</option>
+          <option value="updated_at-asc">Last updated (oldest)</option>
+          <option value="sale-desc">Transaction price (high to low)</option>
+          <option value="sale-asc">Transaction price (low to high)</option>
+          <option value="start_date-asc">Listed date (earliest)</option>
+          <option value="start_date-desc">Listed date (latest)</option>
+          <option value="end_date-asc">Exp./Closing date (earliest)</option>
+          <option value="end_date-desc">Exp./Closing date (latest)</option>
+          <option value="compliance_requested_at-desc">Submitted for review (newest)</option>
+          <option value="compliance_requested_at-asc">Submitted for review (oldest)</option>
+          <option value="creator_name-asc">Agent Name (A–Z)</option>
+          <option value="creator_name-desc">Agent Name (Z–A)</option>
+        </select>
+      </div>
+
+      <div className="flex items-center gap-2 mt-6">
+        <input id="closing_month" type="checkbox" className="h-4 w-4" checked={closingThisMonth} onChange={(e)=>setClosingThisMonth(e.target.checked)} />
+        <label htmlFor="closing_month" className="text-sm">Closing this month</label>
+      </div>
+
+      <div className="ml-auto flex items-center gap-2 mt-6">
+        <button onClick={() => setViewMode('list')} className={`btn btn-sm ${viewMode==='list' ? 'btn-primary' : 'btn-outline'}`}>List</button>
+        <button onClick={() => setViewMode('grid')} className={`btn btn-sm ${viewMode==='grid' ? 'btn-primary' : 'btn-outline'}`}>Grid</button>
+        <button onClick={() => setViewMode('compact')} className={`btn btn-sm ${viewMode==='compact' ? 'btn-primary' : 'btn-outline'}`}>Compact</button>
+      </div>
+    </div>
+  );
+
+  const renderListTable = () => (
+    <div className="table-container loop-table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Property Address</th>
+            <th>Client</th>
+            <th>Sale Amount</th>
+            <th>Status</th>
+            <th>End Date</th>
+            <th>Created by</th>
+            <th className="actions-header text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loops.map((loop) => (
+            <tr key={loop.id}>
+              <td className="font-medium">#{loop.id}</td>
+              <td>{loop.type}</td>
+              <td className="max-w-xs" title={loop.property_address}>
+                <div className="truncate">{loop.property_address || 'N/A'}</div>
+                <ImageGallery images={loop.imageList || []} maxThumbnails={2} />
+              </td>
+              <td>{loop.client_name || 'N/A'}</td>
+              <td>
+                {loop.sale ? `$${parseFloat(loop.sale).toLocaleString()}` : 'N/A'}
+              </td>
+              <td>{getStatusBadge(loop.status)}</td>
+              <td>
+                <div className="end-date-row">
+                  <span className="text-sm text-gray-900">{dateUtils.formatDate(loop.end_date)}</span>
+                  {getDueBadge(loop.end_date, loop.status)}
+                </div>
+              </td>
+              <td className="creator-cell">{loop.creator_name}</td>
+              <td className="actions-cell">
+                <div className="flex space-x-2">
+                  <Link to={`/loops/edit/${loop.id}`} className="btn btn-sm btn-outline flex items-center gap-1">✏️ Edit</Link>
+                  <button onClick={() => handleExportPDF(loop.id)} className="btn btn-sm btn-secondary flex items-center gap-1" title="Export PDF">📄 PDF</button>
+                  {user?.role === 'admin' && (
+                    <>
+                      <button onClick={() => handleArchive(loop.id)} className="btn btn-sm btn-secondary flex items-center gap-1" title="Archive Loop">📦 Archive</button>
+                      <button onClick={() => handleDelete(loop.id)} className="btn btn-sm btn-danger flex items-center gap-1" title="Delete Loop">🗑️ Delete</button>
+                    </>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderGridCards = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {loops.map((loop) => (
+        <div key={loop.id} className="card">
+          <div className="card-body">
+            <div className="flex items-start justify-between mb-2">
+              <div className="font-semibold">#{loop.id} • {loop.type}</div>
+              {getStatusBadge(loop.status)}
+            </div>
+            <div className="text-sm text-gray-700 truncate" title={loop.property_address}>{loop.property_address || 'N/A'}</div>
+            <div className="text-xs text-gray-500">Client: {loop.client_name || 'N/A'}</div>
+            <div className="mt-2 text-sm font-medium">{loop.sale ? `$${parseFloat(loop.sale).toLocaleString()}` : 'N/A'}</div>
+            <div className="mt-1 text-xs text-gray-500">End: {dateUtils.formatDate(loop.end_date)}</div>
+            <div className="mt-3 flex gap-2">
+              <Link to={`/loops/edit/${loop.id}`} className="btn btn-sm btn-outline">✏️ Edit</Link>
+              <button onClick={() => handleExportPDF(loop.id)} className="btn btn-sm btn-secondary">📄 PDF</button>
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="card">
-          <div className="table-container loop-table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Type</th>
-                  <th>Property Address</th>
-                  <th>Client</th>
-                  <th>Sale Amount</th>
-                  <th>Status</th>
-                  <th>End Date</th>
-                  <th>Created by</th>
-                  <th className="actions-header text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loops.map((loop) => (
-                  <tr key={loop.id}>
-                    <td className="font-medium">#{loop.id}</td>
-                    <td>{loop.type}</td>
-                    <td className="max-w-xs" title={loop.property_address}>
-                      <div className="truncate">{loop.property_address || 'N/A'}</div>
-                      <ImageGallery images={loop.imageList || []} maxThumbnails={2} />
-                    </td>
-                    <td>{loop.client_name || 'N/A'}</td>
-                    <td>
-                      {loop.sale ? `$${parseFloat(loop.sale).toLocaleString()}` : 'N/A'}
-                    </td>
-                    <td>{getStatusBadge(loop.status)}</td>
-                    <td>
-                      <div className="end-date-row">
-                        <span className="text-sm text-gray-900">{dateUtils.formatDate(loop.end_date)}</span>
-                        {getDueBadge(loop.end_date, loop.status)}
-                      </div>
-                    </td>
-                    <td className="creator-cell">{loop.creator_name}</td>
-                    <td className="actions-cell">
-                      <div className="flex space-x-2">
-                        <Link
-                          to={`/loops/edit/${loop.id}`}
-                          className="btn btn-sm btn-outline flex items-center gap-1"
-                        >
-                          ✏️ Edit
-                        </Link>
+      ))}
+    </div>
+  );
 
-                        <button
-                          onClick={() => handleExportPDF(loop.id)}
-                          className="btn btn-sm btn-secondary flex items-center gap-1"
-                          title="Export PDF"
-                        >
-                          📄 PDF
-                        </button>
+  const renderCompactTable = () => (
+    <div className="table-container loop-table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th>End</th>
+            <th className="actions-header text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loops.map((loop) => (
+            <tr key={loop.id}>
+              <td className="font-medium">#{loop.id}</td>
+              <td className="max-w-xs" title={loop.property_address}><div className="truncate">{loop.property_address || 'N/A'}</div></td>
+              <td>{getStatusBadge(loop.status)}</td>
+              <td>{dateUtils.formatDate(loop.end_date)}</td>
+              <td className="actions-cell">
+                <div className="flex space-x-2 justify-center">
+                  <Link to={`/loops/edit/${loop.id}`} className="btn btn-sm btn-outline">✏️</Link>
+                  <button onClick={() => handleExportPDF(loop.id)} className="btn btn-sm btn-secondary">📄</button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 
-                        {user?.role === 'admin' && (
-                          <>
-                            <button
-                              onClick={() => handleArchive(loop.id)}
-                              className="btn btn-sm btn-secondary flex items-center gap-1"
-                              title="Archive Loop"
-                            >
-                              📦 Archive
-                            </button>
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Filters sidebar */}
+        <aside className="card lg:col-span-1">
+          <div className="card-header"><h3 className="text-lg font-semibold">Filters</h3></div>
+          <div className="card-body space-y-6">
+            {/* Archived */}
+            <div>
+              <div className="text-sm font-semibold text-gray-700 mb-2">Archived</div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="archived" checked={archivedMode==='hide'} onChange={()=>setArchivedMode('hide')} /> Hide Archived</label>
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="archived" checked={archivedMode==='only'} onChange={()=>setArchivedMode('only')} /> Only Archived</label>
+                <label className="flex items-center gap-2 text-sm"><input type="radio" name="archived" checked={archivedMode==='all'} onChange={()=>setArchivedMode('all')} /> All</label>
+              </div>
+            </div>
 
-                            <button
-                              onClick={() => handleDelete(loop.id)}
-                              className="btn btn-sm btn-danger flex items-center gap-1"
-                              title="Delete Loop"
-                            >
-                              🗑️ Delete
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+            {/* Loop Type */}
+            <div>
+              <div className="text-sm font-semibold text-gray-700 mb-2">Loop Type</div>
+              <div className="space-y-2">
+                {['No Transaction Type','Listing for Sale','Listing for Lease','Purchase','Lease','Real Estate Other','Other'].map((t) => (
+                  <label key={t} className="flex items-center gap-2 text-sm">
+                    <input type="radio" name="typeFilter" checked={typeFilter===t} onChange={()=>setTypeFilter(t)} /> {t}
+                  </label>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                <button className="text-xs text-gray-500 underline" onClick={()=>setTypeFilter('')}>Clear</button>
+              </div>
+            </div>
 
-      {/* Summary */}
-      <div className="text-sm text-gray-600 text-center">
-        Showing {loops.length} loop{loops.length !== 1 ? 's' : ''}
+            {/* Loop Status */}
+            <div>
+              <div className="text-sm font-semibold text-gray-700 mb-2">Loop Status</div>
+              <div className="space-y-2">
+                {['No Status','Pre-Listing','Private Listing','Active Listing','Under Contract','Withdrawn','Sold','Terminated','Leased','Pre-Offer','New','In-Progress','Done'].map((s) => (
+                  <label key={s} className="flex items-center gap-2 text-sm">
+                    <input type="radio" name="statusFilter" checked={statusFilter===s.toLowerCase().replace(' ', '-')} onChange={()=>setStatusFilter(s.toLowerCase().replace(' ', '-'))} /> {s}
+                  </label>
+                ))}
+                <button className="text-xs text-gray-500 underline" onClick={()=>setStatusFilter('')}>Clear</button>
+              </div>
+            </div>
+
+            {/* Review Stage */}
+            <div>
+              <div className="text-sm font-semibold text-gray-700 mb-2">Review Stage</div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={reviewFilters.reviewStage==='unsubmitted'} onChange={(e)=>setReviewFilters(prev=>({...prev, reviewStage: e.target.checked ? 'unsubmitted' : ''}))} /> Unsubmitted
+              </label>
+            </div>
+
+            {/* Listing/Contract Review */}
+            <div>
+              <div className="text-sm font-semibold text-gray-700 mb-2">LISTING/CONTRACT REVIEW</div>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  ['returned_to_agent','Returned to agent'],
+                  ['listing_documents','Listing Documents'],
+                  ['need_review','Need Review'],
+                  ['closed','Closed'],
+                  ['approved_for_commission','Approved for Commission'],
+                  ['listing_approved','Listing Approved'],
+                  ['terminated','Terminated']
+                ].map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={reviewFilters.listingContract.includes(key)} onChange={(e)=>setReviewFilters(prev=>({
+                      ...prev,
+                      listingContract: e.target.checked ? [...prev.listingContract, key] : prev.listingContract.filter(k=>k!==key)
+                    }))} /> {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Buying/Contract Review */}
+            <div>
+              <div className="text-sm font-semibold text-gray-700 mb-2">Buying/Contract Review</div>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  ['returned_to_agent','Returned to Agent'],
+                  ['contract_documents','Contract Documents'],
+                  ['need_review','Need Review'],
+                  ['closed','Closed'],
+                  ['approved_for_commission','Approved for Commission'],
+                  ['listing_approved','Listing Approved'],
+                  ['terminated','Terminated']
+                ].map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={reviewFilters.buyingContract.includes(key)} onChange={(e)=>setReviewFilters(prev=>({
+                      ...prev,
+                      buyingContract: e.target.checked ? [...prev.buyingContract, key] : prev.buyingContract.filter(k=>k!==key)
+                    }))} /> {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main content */}
+        <section className="lg:col-span-3 space-y-4">
+          <div className="card">
+            <div className="card-body">
+              {renderToolbar()}
+            </div>
+          </div>
+
+          {loops.length === 0 ? (
+            <div className="card">
+              <div className="card-body text-center py-12">
+                <div className="text-6xl mb-4">📋</div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No loops found</h3>
+                <p className="text-gray-600 mb-4">
+                  {searchTerm || statusFilter || typeFilter
+                    ? 'Try adjusting your filters to see more results.'
+                    : 'Get started by creating your first transaction loop.'}
+                </p>
+                <Link to="/loops/new" className="btn btn-primary">Create New Loop</Link>
+              </div>
+            </div>
+          ) : (
+            <div className="card">
+              {viewMode === 'list' && renderListTable()}
+              {viewMode === 'grid' && (
+                <div className="card-body">{renderGridCards()}</div>
+              )}
+              {viewMode === 'compact' && renderCompactTable()}
+            </div>
+          )}
+
+          <div className="text-sm text-gray-600 text-center">
+            Showing {loops.length} loop{loops.length !== 1 ? 's' : ''}
+          </div>
+        </section>
       </div>
     </div>
   );
