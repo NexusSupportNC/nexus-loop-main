@@ -47,16 +47,17 @@ const AdminSettingsNew = ({ user, addNotification }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('system');
 
-  // Set active tab from query string if provided
+  // Set active tab from query string or navigation state
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
-    if (tabParam && tabParam !== activeTab) {
-      setActiveTab(tabParam);
-      // Ensure viewport starts at top when navigating directly to a tab
+    const stateTab = location.state && location.state.tab ? location.state.tab : null;
+    const next = stateTab || tabParam;
+    if (next && next !== activeTab) {
+      setActiveTab(next);
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
-  }, [location.search]);
+  }, [location.search, location.state]);
 
   // Keep URL in sync when switching tabs for shareable links
   useEffect(() => {
