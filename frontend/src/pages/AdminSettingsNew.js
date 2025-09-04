@@ -61,12 +61,15 @@ const AdminSettingsNew = ({ user, addNotification }) => {
   // Keep URL in sync when switching tabs for shareable links
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (activeTab) {
-      params.set('tab', activeTab);
-      navigate({ search: params.toString() }, { replace: true });
+    if (!activeTab) return;
+    params.set('tab', activeTab);
+    const newSearch = params.toString();
+    const currentSearch = location.search.replace(/^\?/, '');
+    if (newSearch !== currentSearch) {
+      navigate({ search: newSearch }, { replace: true });
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
-  }, [activeTab]);
+  }, [activeTab, location.search, navigate]);
 
   // Tab configuration
   const tabs = [
