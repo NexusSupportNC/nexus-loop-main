@@ -47,7 +47,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
   const [closingThisMonth, setClosingThisMonth] = useState(false);
 
   // View and sort state
-  const [viewMode, setViewMode] = useState('list'); // list | grid | compact
+  const [viewMode, setViewMode] = useState('grid'); // list | grid | compact
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
 
@@ -442,24 +442,48 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
 
   const renderGridCards = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {loops.map((loop) => (
-        <div key={loop.id} className="card">
-          <div className="card-body">
-            <div className="flex items-start justify-between mb-2">
-              <div className="font-semibold">#{loop.id} • {loop.type}</div>
-              {getStatusBadge(loop.status)}
-            </div>
-            <div className="text-sm text-gray-700 truncate" title={loop.property_address}>{loop.property_address || 'N/A'}</div>
-            <div className="text-xs text-gray-500">Client: {loop.client_name || 'N/A'}</div>
-            <div className="mt-2 text-sm font-medium">{loop.sale ? `$${parseFloat(loop.sale).toLocaleString()}` : 'N/A'}</div>
-            <div className="mt-1 text-xs text-gray-500">End: {dateUtils.formatDate(loop.end_date)}</div>
-            <div className="mt-3 flex gap-2">
-              <Link to={`/loops/edit/${loop.id}`} className="btn btn-sm btn-outline">✏️ Edit</Link>
-              <button onClick={() => handleExportPDF(loop.id)} className="btn btn-sm btn-secondary">📄 PDF</button>
+      {loops.map((loop) => {
+        const cover = (loop.imageList && loop.imageList.length > 0) ? `/api/loops/images/${loop.imageList[0].filename}` : null;
+        const isNew = (() => { try { const d = new Date(loop.created_at); return (Date.now() - d.getTime()) < 7*24*60*60*1000; } catch { return false; } })();
+        const showBell = loop.compliance_status === 'pending';
+        return (
+          <div key={loop.id} className="loop-card card">
+            {cover && (
+              <div className="loop-card-cover">
+                <img src={cover} alt="Property" />
+                {isNew && <span className="loop-badge">New</span>}
+              </div>
+            )}
+            <div className="card-body loop-card-body">
+              <div className="loop-card-title-row">
+                <h4 className="loop-card-title" title={loop.property_address}>{loop.property_address || 'N/A'}</h4>
+                {showBell && <span className="loop-card-bell" title="Requires attention">🔔</span>}
+              </div>
+              <div className="loop-meta">
+                <div className="loop-meta-row"><span className="loop-meta-label">Type:</span><span className="loop-meta-value">{loop.type || 'N/A'}</span></div>
+                <div className="loop-meta-row"><span className="loop-meta-label">Status:</span><span className="loop-meta-value">{(loop.status || 'none').replace('-', ' ')}</span></div>
+                <div className="loop-meta-row"><span className="loop-meta-label">Sale:</span><span className="loop-meta-value">{loop.sale ? `$${parseFloat(loop.sale).toLocaleString()}` : 'N/A'}</span></div>
+                <div className="loop-meta-row"><span className="loop-meta-label">Creator:</span><span className="loop-meta-value">{loop.creator_name || 'N/A'}</span></div>
+                <div className="loop-meta-row"><span className="loop-meta-label">Created:</span><span className="loop-meta-value">{dateUtils.formatDateTime(loop.created_at)}</span></div>
+              </div>
+              <div className="loop-actions">
+                <Link to={`/loops/edit/${loop.id}`} className="btn btn-sm btn-outline">✏️ Edit</Link>
+                {user?.role === 'admin' && (
+                  <>
+                    <button onClick={() => handleArchive(loop.id)} className="btn btn-sm btn-secondary">📦 Archive</button>
+                    <button onClick={() => handleDelete(loop.id)} className="btn btn-sm btn-danger">🗑️ Delete</button>
+                  </>
+                )}
+                <button onClick={() => handleExportPDF(loop.id)} className="btn btn-sm btn-secondary">📄 PDF</button>
+              </div>
+              <Link to={`/loops/edit/${loop.id}`} className="loop-fab" title="Enter Closing">
+                <span>Enter
+                  Closing</span>
+              </Link>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
