@@ -45,7 +45,11 @@ const UserProfileImage = ({ user, size = 'w-8 h-8' }) => {
 const AdminSettingsNew = ({ user, addNotification }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('system');
+  const initialTab = (() => {
+    const params = new URLSearchParams(location.search);
+    return (location.state && location.state.tab) ? location.state.tab : (params.get('tab') || 'system');
+  })();
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Set active tab from query string or navigation state
   useEffect(() => {
@@ -97,7 +101,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
       case 'users':
         return <UserManagement addNotification={addNotification} />;
       case 'templates':
-        return <DocumentTemplates addNotification={addNotification} />;
+        return <DocumentTemplates addNotification={addNotification} initialOpenUpload={Boolean(location.state && location.state.openUpload)} />;
       case 'apikeys':
         return <APIKeysManagement addNotification={addNotification} />;
       case 'activity':
@@ -1806,7 +1810,7 @@ const DataExport = ({ addNotification }) => {
 };
 
 // Document Templates Component
-const DocumentTemplates = ({ addNotification }) => {
+const DocumentTemplates = ({ addNotification, initialOpenUpload = false }) => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploadModal, setUploadModal] = useState(false);
@@ -1824,6 +1828,12 @@ const DocumentTemplates = ({ addNotification }) => {
   useEffect(() => {
     fetchTemplates();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (initialOpenUpload) {
+      setUploadModal(true);
+    }
+  }, [initialOpenUpload]);
 
   const fetchTemplates = async () => {
     try {
