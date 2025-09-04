@@ -356,7 +356,16 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
         <button onClick={() => setViewMode('compact')} className={`btn btn-sm ${viewMode==='compact' ? 'btn-primary' : 'btn-outline'}`}>Compact</button>
       </div>
 
-      {(searchTerm || statusFilter || typeFilter || closingThisMonth || archivedMode!=='hide' || reviewFilters.reviewStage || reviewFilters.listingContract.length || reviewFilters.buyingContract.length) && (
+      {Boolean(
+        searchTerm ||
+        statusFilter ||
+        typeFilter ||
+        closingThisMonth ||
+        archivedMode !== 'hide' ||
+        reviewFilters.reviewStage ||
+        reviewFilters.listingContract.length > 0 ||
+        reviewFilters.buyingContract.length > 0
+      ) && (
         <div className="w-full mt-3 flex flex-wrap items-center gap-2">
           <span className="text-xs text-gray-500">Active filters:</span>
           {searchTerm && (
