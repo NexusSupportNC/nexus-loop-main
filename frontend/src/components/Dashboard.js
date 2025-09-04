@@ -18,6 +18,20 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
   const [recentLoops, setRecentLoops] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Inline Document Template upload
+  const [uploadModal, setUploadModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [templateData, setTemplateData] = useState({ name: '', description: '', category: 'contract' });
+  const categories = [
+    { value: 'contract', label: 'Contract' },
+    { value: 'listing', label: 'Listing Agreement' },
+    { value: 'disclosure', label: 'Disclosure' },
+    { value: 'addendum', label: 'Addendum' },
+    { value: 'notice', label: 'Notice' },
+    { value: 'other', label: 'Other' }
+  ];
+
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
@@ -480,9 +494,9 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Document Templates</h3>
               <div className="flex space-x-2">
-                <Link to="/settings?tab=templates" state={{ tab: 'templates', openUpload: true }} className="btn btn-sm btn-primary">
+                <button onClick={() => { setUploadModal(true); setSelectedFile(null); setTemplateData({ name: '', description: '', category: 'contract' }); }} className="btn btn-sm btn-primary">
                   📤 Import Templates
-                </Link>
+                </button>
                 <Link to="/settings?tab=templates" state={{ tab: 'templates' }} className="btn btn-sm btn-outline">
                   📋 Saved Templates
                 </Link>
@@ -517,6 +531,79 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
                   <div className="text-xs text-purple-800 font-medium">Save & Reuse</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {uploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Upload Document Template</h3>
+              <button onClick={() => setUploadModal(false)} className="text-gray-400 hover:text-gray-600">×</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Document File *</label>
+                <input type="file" accept=".pdf,.doc,.docx" className="w-full px-3 py-2 border border-gray-300 rounded-md" onChange={(e)=>{
+                  const file = e.target.files && e.target.files[0];
+                  if (!file) return;
+                  const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                  if (!allowed.includes(file.type)) {
+                    addNotification('Please select a PDF or Word document', 'error');
+                    setSelectedFile(null);
+                    return;
+                  }
+                  setSelectedFile(file);
+                  if (!templateData.name) {
+                    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+                    setTemplateData(prev => ({ ...prev, name: nameWithoutExt }));
+                  }
+                }} />
+                <p className="text-xs text-gray-500 mt-1">Supported: PDF, DOC, DOCX (Max 10MB)</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Template Name *</label>
+                <input type="text" value={templateData.name} onChange={(e)=> setTemplateData(prev=>({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Enter template name" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select value={templateData.category} onChange={(e)=> setTemplateData(prev=>({ ...prev, category: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                  {categories.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea value={templateData.description} onChange={(e)=> setTemplateData(prev=>({ ...prev, description: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Optional description" />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={()=> setUploadModal(false)} className="btn btn-outline">Cancel</button>
+              <button className="btn btn-primary" disabled={uploading} onClick={async ()=>{
+                if (!selectedFile || !templateData.name.trim()) { addNotification('Please select a file and provide a template name', 'error'); return; }
+                try {
+                  setUploading(true);
+                  const formData = new FormData();
+                  formData.append('templateFile', selectedFile);
+                  formData.append('name', templateData.name);
+                  formData.append('description', templateData.description);
+                  formData.append('category', templateData.category);
+                  const res = await adminAPI.uploadDocumentTemplate(formData);
+                  if (res.data.success) {
+                    addNotification('Document template uploaded successfully', 'success');
+                    setUploadModal(false);
+                    setSelectedFile(null);
+                    setTemplateData({ name: '', description: '', category: 'contract' });
+                  }
+                } catch (err) {
+                  addNotification(apiUtils.getErrorMessage(err), 'error');
+                } finally {
+                  setUploading(false);
+                }
+              }}>
+                {uploading ? (<><div className="spinner"></div>Uploading...</>) : 'Upload Template'}
+              </button>
             </div>
           </div>
         </div>
