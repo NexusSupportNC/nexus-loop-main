@@ -36,15 +36,19 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Token expired or invalid — clear and redirect once
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     } else if (error.response?.status === 403 && error.response?.data?.suspended) {
       // User account suspended
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -195,6 +199,19 @@ export const adminAPI = {
 
 // Utility functions
 export const apiUtils = {
+  // JWT expiry check
+  isTokenExpired: (token) => {
+    try {
+      if (!token || token.split('.').length !== 3) return false;
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload || !payload.exp) return false;
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp <= now;
+    } catch {
+      return false;
+    }
+  },
+
   // Handle file download
   downloadFile: (blob, filename) => {
     const url = window.URL.createObjectURL(blob);
@@ -225,7 +242,13 @@ export const apiUtils = {
   isAuthenticated: () => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
-    return !!(token && user);
+    if (!(token && user)) return false;
+    if (apiUtils.isTokenExpired(token)) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return false;
+    }
+    return true;
   },
 
   // Get current user
