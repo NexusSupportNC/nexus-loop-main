@@ -480,7 +480,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Document Templates</h3>
               <div className="flex space-x-2">
-                <Link to="/settings?tab=templates" state={{ tab: 'templates' }} className="btn btn-sm btn-primary">
+                <Link to="/settings?tab=templates" state={{ tab: 'templates', openUpload: true }} className="btn btn-sm btn-primary">
                   📤 Import Templates
                 </Link>
                 <Link to="/settings?tab=templates" state={{ tab: 'templates' }} className="btn btn-sm btn-outline">
