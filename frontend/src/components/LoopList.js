@@ -211,6 +211,11 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     }
   };
 
+  const toTitle = (txt) => {
+    if (!txt) return 'Unknown';
+    return txt.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   const getStatusBadge = (status) => {
     const statusClasses = {
       'pre-offer': 'status-badge status-active',
@@ -227,7 +232,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
 
     return (
       <span className={statusClasses[status] || 'status-badge'}>
-        {status?.replace('-', ' ') || 'Unknown'}
+        {toTitle(status)}
       </span>
     );
   };
@@ -461,8 +466,10 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
               </div>
               <div className="loop-meta">
                 <div className="loop-meta-row"><span className="loop-meta-label">Type:</span><span className="loop-meta-value">{loop.type || 'N/A'}</span></div>
-                <div className="loop-meta-row"><span className="loop-meta-label">Status:</span><span className="loop-meta-value">{(loop.status || 'none').replace('-', ' ')}</span></div>
+                <div className="loop-meta-row"><span className="loop-meta-label">Status:</span><span className="loop-meta-value">{toTitle(loop.status || 'none')}</span></div>
                 <div className="loop-meta-row"><span className="loop-meta-label">Sale:</span><span className="loop-meta-value">{loop.sale ? `$${parseFloat(loop.sale).toLocaleString()}` : 'N/A'}</span></div>
+                <div className="loop-meta-row"><span className="loop-meta-label">Client:</span><span className="loop-meta-value">{loop.client_name || 'N/A'}</span></div>
+                <div className="loop-meta-row"><span className="loop-meta-label">End:</span><span className="loop-meta-value">{dateUtils.formatDate(loop.end_date)}</span> {getDueBadge(loop.end_date, loop.status)}</div>
                 <div className="loop-meta-row"><span className="loop-meta-label">Creator:</span><span className="loop-meta-value">{loop.creator_name || 'N/A'}</span></div>
                 <div className="loop-meta-row"><span className="loop-meta-label">Created:</span><span className="loop-meta-value">{dateUtils.formatDateTime(loop.created_at)}</span></div>
               </div>
