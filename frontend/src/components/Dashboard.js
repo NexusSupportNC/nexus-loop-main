@@ -49,12 +49,14 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
       }
 
     } catch (error) {
-      const errorMessage = apiUtils.getErrorMessage(error);
-      // Only show error notifications for non-network errors to prevent auto-scroll
-      if (!error.code || error.code !== 'NETWORK_ERROR') {
-        addNotification(errorMessage, 'error');
+      // Avoid noise on expired sessions (401 handled by interceptor)
+      if (error.response?.status !== 401) {
+        const errorMessage = apiUtils.getErrorMessage(error);
+        if (!error.code || error.code !== 'NETWORK_ERROR') {
+          addNotification(errorMessage, 'error');
+        }
+        console.error('Dashboard data fetch error:', error);
       }
-      console.error('Dashboard data fetch error:', error);
     } finally {
       setLoading(false);
     }
