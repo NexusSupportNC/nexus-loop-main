@@ -171,9 +171,11 @@ const EditLoop = ({ user, addNotification }) => {
         <div className="flex items-center space-x-4 mb-4">
           <button
             onClick={() => navigate(-1)}
-            className="text-gray-600 hover:text-gray-900 transition-colors"
->
-            ← Back
+            className="btn btn-outline btn-sm flex items-center gap-2"
+            aria-label="Back"
+          >
+            <span>←</span>
+            <span>Back</span>
           </button>
           <div className="h-6 w-px bg-gray-300"></div>
           <nav className="text-sm text-gray-600">
