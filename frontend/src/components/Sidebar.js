@@ -72,12 +72,12 @@ const Sidebar = ({ user, onLogout, collapsed, onToggle, isMobile, onNavigate }) 
       path: '/loops/new',
       icon: '➕'
     },
-    // Admin-only All Loops placed next to Create Loop
-    ...(user?.role === 'admin' ? [{
+    // All Loops placed next to Create Loop (visible to all roles)
+    {
       name: 'All Loops',
       path: '/loops/all',
       icon: '📋'
-    }] : []),
+    },
     // People section for both Agents and Admins
     {
       name: 'People',
