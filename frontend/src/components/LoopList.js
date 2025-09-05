@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { loopAPI, apiUtils } from '../services/api';
 import { dateUtils } from '../utils/dateUtils';
@@ -39,7 +39,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
   const [showReviewStage, setShowReviewStage] = useState(true);
 
   // Fields that API supports for sorting
-  const apiSortableFields = new Set(['created_at', 'updated_at', 'end_date', 'sale', 'status', 'type']);
+  const apiSortableFields = useMemo(() => new Set(['created_at', 'updated_at', 'end_date', 'sale', 'status', 'type']), []);
 
   const appliedStatusApi = (uiStatusToApi[statusFilter] ?? statusFilter) || '';
   const appliedTypeApi = (typeFilter === 'No Transaction Type') ? '' : typeFilter;
@@ -128,7 +128,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, archivedMode, reviewFilters, filters]);
+  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, archivedMode, reviewFilters, filters, addNotification, appliedStatusApi, appliedTypeApi, apiSortableFields]);
 
   useEffect(() => {
     fetchLoops();
