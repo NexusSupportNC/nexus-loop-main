@@ -81,21 +81,15 @@ const LoopDocuments = ({ loopId, addNotification }) => {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold flex items-center">
-          <span className="mr-2">📄</span>
-          Loop Documents
+      {/* Header (as per provided DOM changes) */}
+      <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column' }}>
+        <h3 style={{ display: 'flex', alignItems: 'flex-start', fontSize: 0, fontWeight: 600, lineHeight: '33px', justifyContent: 'center', maxWidth: 0, height: '40px' }}>
+          <div style={{ position: 'relative', marginLeft: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'flex-start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', marginLeft: '20px', minHeight: '100px', padding: '20px' }}>
+              <section style={{ display: 'flex', flexDirection: 'column', position: 'relative', marginLeft: 'auto', minHeight: '100px', padding: '20px', width: '100%', alignSelf: 'stretch', flexGrow: 1, maxWidth: '1200px', marginRight: 'auto' }} />
+            </div>
+          </div>
         </h3>
-        {templates.length > 0 && (
-          <button
-            onClick={() => setShowGenerator(!showGenerator)}
-            className="btn btn-primary btn-sm flex items-center gap-2"
-          >
-            <span>➕</span>
-            Generate Document
-          </button>
-        )}
       </div>
 
       {/* Document Generator */}
@@ -146,8 +140,8 @@ const LoopDocuments = ({ loopId, addNotification }) => {
       )}
 
       {/* Generated Documents List */}
-      <div className="card">
-        <div className="card-header">
+      <div className="card" style={{ backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden', border: '1px solid rgb(226, 232, 240)' }}>
+        <div className="card-header" style={{ backgroundColor: 'rgb(250, 251, 252)', borderBottomStyle: 'solid', borderBottomWidth: 1, borderColor: 'rgb(30, 41, 59) rgb(30, 41, 59) rgb(226, 232, 240)', padding: '20px 24px' }}>
           <h4 className="font-semibold">Generated Documents ({documents.length})</h4>
         </div>
         <div className="card-body">
