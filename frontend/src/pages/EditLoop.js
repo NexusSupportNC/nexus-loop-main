@@ -171,7 +171,7 @@ const EditLoop = ({ user, addNotification }) => {
         <div className="flex items-center space-x-4 mb-4">
           <button
             onClick={() => navigate(-1)}
-            className="btn btn-outline btn-sm flex items-center gap-2"
+            className="btn btn-outline btn-sm flex items-center gap-2 btn-back-wide"
             aria-label="Back"
           >
             <span>←</span>
@@ -179,19 +179,15 @@ const EditLoop = ({ user, addNotification }) => {
           </button>
           <div className="h-6 w-px bg-gray-300"></div>
           <nav className="text-sm text-gray-600">
-            <span>Dashboard</span>
-            <span className="mx-2">/</span>
-            <span className="text-gray-900 font-medium">Edit Loop #{id}</span>
+            <span className="sr-only">breadcrumb</span>
           </nav>
         </div>
         
         <div className="flex justify-between items-start">
           <div>
-            <div className="flex items-center space-x-3 mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">
-                Edit Loop #{id}
-              </h1>
-              {getStatusBadge(loop.status)}
+            <div className="flex items-center mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">Edit Loop #{id}</h1>
+              <div className="ml-4">{getStatusBadge(loop.status)}</div>
             </div>
             <p className="text-gray-600">
               {loop.property_address}
@@ -204,7 +200,7 @@ const EditLoop = ({ user, addNotification }) => {
           <div className="flex space-x-3">
             <button
               onClick={handleExportPDF}
-              className="btn btn-secondary btn-sm flex items-center gap-1"
+              className="btn btn-secondary btn-sm flex items-center gap-1 loop-action-spaced"
             >
               📄 Export PDF
             </button>
@@ -213,14 +209,14 @@ const EditLoop = ({ user, addNotification }) => {
               <>
                 <button
                   onClick={handleArchive}
-                  className="btn btn-secondary btn-sm flex items-center gap-1"
+                  className="btn btn-secondary btn-sm flex items-center gap-1 loop-action-spaced"
                 >
                   📦 Archive
                 </button>
 
                 <button
                   onClick={handleDelete}
-                  className="btn btn-danger btn-sm flex items-center gap-1"
+                  className="btn btn-danger btn-sm flex items-center gap-1 loop-action-spaced"
                 >
                   🗑️ Delete
                 </button>
@@ -230,26 +226,25 @@ const EditLoop = ({ user, addNotification }) => {
         </div>
       </div>
 
-      {/* Tabs - enhanced UI */}
+      {/* Tabs - enhanced UI to match diff */}
       <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl p-4 border border-slate-200 shadow-sm mb-4">
         <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
-          <nav className="flex flex-wrap gap-2">
+          <nav className="flex flex-wrap loop-tabs">
             {[
-              { key: 'documents', label: 'Documents', icon: '📄' },
-              { key: 'tasks', label: 'Tasks', icon: '✅' },
-              { key: 'people', label: 'People', icon: '👥' },
-              { key: 'details', label: 'Details', icon: '📝' },
-              { key: 'activity', label: 'Activity Log', icon: '📊' },
-              { key: 'notifications', label: 'Notifications', icon: '🔔' }
+              { key: 'documents', label: 'Documents' },
+              { key: 'tasks', label: 'Tasks' },
+              { key: 'people', label: 'People' },
+              { key: 'details', label: 'Details' },
+              { key: 'activity', label: 'Activity Log' },
+              { key: 'notifications', label: 'Notifications' }
             ].map(tab => (
               <button
                 key={tab.key}
-                className={`settings-tab-horizontal group ${activeTab===tab.key ? 'active' : ''}`}
+                className={`settings-tab-horizontal loop-tab group ${activeTab===tab.key ? 'active' : ''}`}
                 onClick={() => setActiveTab(tab.key)}
                 aria-current={activeTab===tab.key ? 'page' : undefined}
               >
                 <div className="settings-tab-horizontal-content">
-                  <div className="settings-tab-horizontal-icon"><span>{tab.icon}</span></div>
                   <span className="settings-tab-horizontal-title">{tab.label}</span>
                 </div>
                 {activeTab===tab.key && <div className="settings-tab-horizontal-indicator"></div>}
