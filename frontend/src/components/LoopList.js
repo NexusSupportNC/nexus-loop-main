@@ -268,6 +268,26 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
   const statusSummary = uiStatusOptions.find(o => o.key === statusFilter)?.label || '';
   const typeSummary = typeFilter || '';
   const reviewStageSummary = reviewFilters.reviewStage === 'unsubmitted' ? 'Unsubmitted' : '';
+  const listingLabelsMap = {
+    returned_to_agent: 'Returned to agent',
+    listing_documents: 'Listing Documents',
+    need_review: 'Need Review',
+    closed: 'Closed',
+    approved_for_commission: 'Approved for Commission',
+    listing_approved: 'Listing Approved',
+    terminated: 'Terminated'
+  };
+  const listingReviewSummary = reviewFilters.listingContract.map(k => listingLabelsMap[k]).filter(Boolean).join(', ');
+  const buyingLabelsMap = {
+    returned_to_agent: 'Returned to Agent',
+    contract_documents: 'Contract Documents',
+    need_review: 'Need Review',
+    closed: 'Closed',
+    approved_for_commission: 'Approved for Commission',
+    listing_approved: 'Listing Approved',
+    terminated: 'Terminated'
+  };
+  const buyingReviewSummary = reviewFilters.buyingContract.map(k => buyingLabelsMap[k]).filter(Boolean).join(', ');
 
   const renderToolbar = () => (
     <div className="flex flex-wrap items-end gap-4">
@@ -341,31 +361,31 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
         reviewFilters.listingContract.length > 0 ||
         reviewFilters.buyingContract.length > 0
       ) && (
-        <div className="w-full mt-3 flex flex-wrap items-center gap-2">
+        <div className="w-full mt-3 flex flex-wrap items-center gap-2 active-filters-row">
           <span className="text-xs text-gray-500">Active filters:</span>
           {searchTerm && (
-            <button className="filter-chip" onClick={()=>setSearchTerm('')}>Search: {searchTerm}<span className="filter-chip-close">×</span></button>
+            <button className="filter-chip" onClick={()=>setSearchTerm('')}><span className="filter-chip-label">Search: {searchTerm}</span><span className="filter-chip-close">×</span></button>
           )}
           {statusFilter && (
-            <button className="filter-chip" onClick={()=>setStatusFilter('')}>Status: {uiStatusOptions.find(o=>o.key===statusFilter)?.label || statusFilter}<span className="filter-chip-close">×</span></button>
+            <button className="filter-chip" onClick={()=>setStatusFilter('')}><span className="filter-chip-label">Status: {uiStatusOptions.find(o=>o.key===statusFilter)?.label || statusFilter}</span><span className="filter-chip-close">×</span></button>
           )}
           {typeFilter && (
-            <button className="filter-chip" onClick={()=>setTypeFilter('')}>Type: {typeFilter}<span className="filter-chip-close">×</span></button>
+            <button className="filter-chip" onClick={()=>setTypeFilter('')}><span className="filter-chip-label">Type: {typeFilter}</span><span className="filter-chip-close">×</span></button>
           )}
           {closingThisMonth && (
-            <button className="filter-chip" onClick={()=>setClosingThisMonth(false)}>Closing this month<span className="filter-chip-close">×</span></button>
+            <button className="filter-chip" onClick={()=>setClosingThisMonth(false)}><span className="filter-chip-label">Closing this month</span><span className="filter-chip-close">×</span></button>
           )}
           {archivedMode!=='hide' && (
-            <button className="filter-chip" onClick={()=>setArchivedMode('hide')}>Archived: {archivedMode}<span className="filter-chip-close">×</span></button>
+            <button className="filter-chip" onClick={()=>setArchivedMode('hide')}><span className="filter-chip-label">Archived: {archivedMode}</span><span className="filter-chip-close">×</span></button>
           )}
           {reviewFilters.reviewStage==='unsubmitted' && (
-            <button className="filter-chip" onClick={()=>setReviewFilters(prev=>({...prev, reviewStage: ''}))}>Review: Unsubmitted<span className="filter-chip-close">×</span></button>
+            <button className="filter-chip" onClick={()=>setReviewFilters(prev=>({...prev, reviewStage: ''}))}><span className="filter-chip-label">Review: Unsubmitted</span><span className="filter-chip-close">×</span></button>
           )}
           {reviewFilters.listingContract.length>0 && (
-            <button className="filter-chip" onClick={()=>setReviewFilters(prev=>({...prev, listingContract: []}))}>Listing/Contract: {reviewFilters.listingContract.length} selected<span className="filter-chip-close">×</span></button>
+            <button className="filter-chip" onClick={()=>setReviewFilters(prev=>({...prev, listingContract: []}))}><span className="filter-chip-label">Listing/Contract: {reviewFilters.listingContract.length} selected</span><span className="filter-chip-close">×</span></button>
           )}
           {reviewFilters.buyingContract.length>0 && (
-            <button className="filter-chip" onClick={()=>setReviewFilters(prev=>({...prev, buyingContract: []}))}>Buying/Contract: {reviewFilters.buyingContract.length} selected<span className="filter-chip-close">×</span></button>
+            <button className="filter-chip" onClick={()=>setReviewFilters(prev=>({...prev, buyingContract: []}))}><span className="filter-chip-label">Buying/Contract: {reviewFilters.buyingContract.length} selected</span><span className="filter-chip-close">×</span></button>
           )}
           <button className="btn btn-sm btn-outline ml-auto" onClick={()=>{setSearchTerm('');setStatusFilter('');setTypeFilter('');setClosingThisMonth(false);setArchivedMode('hide');setReviewFilters({reviewStage:'',listingContract:[],buyingContract:[]});}}>Clear all</button>
         </div>
@@ -609,6 +629,9 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
             <div className="accordion-section">
               <button type="button" className="accordion-header" onClick={()=>setShowListingReview(v=>!v)}>
                 <span>LISTING/CONTRACT REVIEW</span>
+                {!showListingReview && (
+                  <span className="ml-auto text-xs text-gray-500 accordion-summary">{listingReviewSummary}</span>
+                )}
                 <span className={`accordion-chevron ${showListingReview ? 'open' : ''}`}>▾</span>
               </button>
               {showListingReview && (
@@ -639,7 +662,10 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
             {/* Buying/Contract Review */}
             <div className="accordion-section">
               <button type="button" className="accordion-header" onClick={()=>setShowBuyingReview(v=>!v)}>
-                <span>Buying/Contract Review</span>
+                <span>BUYING/CONTRACT REVIEW</span>
+                {!showBuyingReview && (
+                  <span className="ml-auto text-xs text-gray-500 accordion-summary">{buyingReviewSummary}</span>
+                )}
                 <span className={`accordion-chevron ${showBuyingReview ? 'open' : ''}`}>▾</span>
               </button>
               {showBuyingReview && (

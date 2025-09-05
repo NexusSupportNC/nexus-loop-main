@@ -2957,6 +2957,19 @@ tr:hover {
 .gap-2 { gap: 8px; }
 .gap-3 { gap: 12px; }
 .gap-4 { gap: 16px; }
+.ml-auto { margin-left: auto; }
+.items-end { align-items: flex-end; }
+.flex-wrap { flex-wrap: wrap; }
+.text-xs { font-size: 12px; }
+.text-sm { font-size: 14px; }
+.text-gray-500 { color: var(--text-tertiary); }
+.min-w-\[180px\] { min-width: 180px; }
+.min-w-\[200px\] { min-width: 200px; }
+.min-w-\[220px\] { min-width: 220px; }
+.active-filters-row { width: 100%; }
+.accordion-summary { max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+.filter-chip { max-width: 100%; min-width: 0; }
+.filter-chip-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .w-full { width: 100%; }
 .h-full { height: 100%; }
