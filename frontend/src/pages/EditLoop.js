@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import LoopForm from '../components/LoopForm';
 import LoopDocuments from '../components/LoopDocuments';
 import LoopFiles from '../components/LoopFiles';
 import LoopTasks from '../components/LoopTasks';
+import LoopDetails from '../components/LoopDetails';
+import LoopPeople from '../components/LoopPeople';
 import { loopAPI, apiUtils } from '../services/api';
 import { dateUtils } from '../utils/dateUtils';
 
@@ -12,6 +13,7 @@ const EditLoop = ({ user, addNotification }) => {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [activity, setActivity] = useState([]);
+  const [activeTab, setActiveTab] = useState('documents'); // documents | tasks | people | details | activity | notifications
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -55,13 +57,9 @@ const EditLoop = ({ user, addNotification }) => {
 
     try {
       const response = await loopAPI.updateLoop(id, formData);
-      
       if (response.data.success) {
         addNotification('Transaction loop updated successfully!', 'success');
-        
-        // Redirect to appropriate dashboard
-        const dashboardPath = user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/agent';
-        navigate(dashboardPath);
+        fetchLoop();
       }
     } catch (error) {
       const errorMessage = apiUtils.getErrorMessage(error);
@@ -174,8 +172,8 @@ const EditLoop = ({ user, addNotification }) => {
           <button
             onClick={() => navigate(-1)}
             className="text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            ��� Back
+>
+            ← Back
           </button>
           <div className="h-6 w-px bg-gray-300"></div>
           <nav className="text-sm text-gray-600">
@@ -230,91 +228,78 @@ const EditLoop = ({ user, addNotification }) => {
         </div>
       </div>
 
-      {/* Loop Info Card */}
-      <div className="card mb-8">
-        <div className="card-body">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Transaction Details</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Type:</span>
-                  <span className="font-medium">{loop.type}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sale Amount:</span>
-                  <span className="font-medium">
-                    {loop.sale ? `$${parseFloat(loop.sale).toLocaleString()}` : 'N/A'}
-                  </span>
-                </div>
-              </div>
-            </div>
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mb-4">
+        <nav className="flex flex-wrap gap-2">
+          {[
+            ['documents','Documents'],
+            ['tasks','Tasks'],
+            ['people','People'],
+            ['details','Details'],
+            ['activity','Activity Log'],
+            ['notifications','Notifications']
+          ].map(([key,label]) => (
+            <button key={key} className={`px-4 py-2 rounded-t-md text-sm ${activeTab===key ? 'bg-white border border-b-0' : 'text-gray-600'}`} onClick={()=>setActiveTab(key)}>
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Timeline</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Start Date:</span>
-                  <span className="font-medium">{dateUtils.formatDate(loop.start_date)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">End Date:</span>
-                  <span className="font-medium">{dateUtils.formatDate(loop.end_date)}</span>
-                </div>
-                {loop.end_date && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Time Left:</span>
-                    <span className="font-medium text-blue-600">
-                      {dateUtils.getCountdownText(loop.end_date)}
-                    </span>
+      {/* Tab content */}
+      {activeTab === 'documents' && (
+        <div className="space-y-6">
+          <LoopFiles loopId={id} user={user} addNotification={addNotification} />
+          {user?.role === 'admin' && (
+            <LoopDocuments loopId={id} addNotification={addNotification} />
+          )}
+        </div>
+      )}
+
+      {activeTab === 'tasks' && (
+        <LoopTasks loopId={id} addNotification={addNotification} />
+      )}
+
+      {activeTab === 'people' && (
+        <LoopPeople loopId={id} participantsRaw={loop.participants} addNotification={addNotification} />
+      )}
+
+      {activeTab === 'details' && (
+        <LoopDetails loopId={id} detailsRaw={loop.details} addNotification={addNotification} />
+      )}
+
+      {activeTab === 'activity' && (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="text-lg font-semibold">Activity Log</h3>
+          </div>
+          <div className="card-body">
+            {activity.length === 0 ? (
+              <div className="text-gray-500">No recent activity</div>
+            ) : (
+              <div className="space-y-2">
+                {activity.map((log) => (
+                  <div key={log.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{log.action_type.replaceAll('_',' ')}</div>
+                      <div className="text-xs text-gray-500">{dateUtils.formatDateTime(log.created_at)} • {log.user_name || 'User'} ({log.user_email || ''})</div>
+                      <div className="text-xs text-gray-600">{log.description}</div>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
-            </div>
-
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Client Info</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Name:</span>
-                  <span className="font-medium">{loop.client_name || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Email:</span>
-                  <span className="font-medium">{loop.client_email || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Phone:</span>
-                  <span className="font-medium">{loop.client_phone || 'N/A'}</span>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Edit Form */}
-      <LoopForm
-        initialData={loop}
-        onSubmit={handleSubmit}
-        loading={loading}
-        isEdit={true}
-      />
-
-      {/* Files Section */}
-      <div className="mt-8">
-        <LoopFiles loopId={id} user={user} addNotification={addNotification} />
-      </div>
-
-      {/* Tasks Section */}
-      <div className="mt-8">
-        <LoopTasks loopId={id} addNotification={addNotification} />
-      </div>
-
-      {/* Documents Template Generator (Admin) */}
-      {user?.role === 'admin' && (
-        <div className="mt-8">
-          <LoopDocuments loopId={id} addNotification={addNotification} />
+      {activeTab === 'notifications' && (
+        <div className="card">
+          <div className="card-header"><h3 className="text-lg font-semibold">Notifications</h3></div>
+          <div className="card-body text-center text-gray-500">
+            You don't have any notifications
+          </div>
         </div>
       )}
 
@@ -337,31 +322,6 @@ const EditLoop = ({ user, addNotification }) => {
               </>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Activity Log */}
-      <div className="mt-8 card">
-        <div className="card-header">
-          <h3 className="text-lg font-semibold">Activity Log</h3>
-        </div>
-        <div className="card-body">
-          {activity.length === 0 ? (
-            <div className="text-gray-500">No recent activity</div>
-          ) : (
-            <div className="space-y-2">
-              {activity.map((log) => (
-                <div key={log.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{log.action_type.replaceAll('_',' ')}</div>
-                    <div className="text-xs text-gray-500">{dateUtils.formatDateTime(log.created_at)} • {log.user_name || 'User'} ({log.user_email || ''})</div>
-                    <div className="text-xs text-gray-600">{log.description}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>
