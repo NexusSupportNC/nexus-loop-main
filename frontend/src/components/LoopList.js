@@ -37,7 +37,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
   // Fields that API supports for sorting
   const apiSortableFields = new Set(['created_at', 'updated_at', 'end_date', 'sale', 'status', 'type']);
 
-  const appliedStatusApi = uiStatusToApi[statusFilter] ?? '';
+  const appliedStatusApi = (uiStatusToApi[statusFilter] ?? statusFilter) || '';
   const appliedTypeApi = (typeFilter === 'No Transaction Type') ? '' : typeFilter;
 
   const fetchLoops = async () => {
@@ -270,13 +270,9 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
         <label htmlFor="ll-status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
         <select id="ll-status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
           <option value="">All Statuses</option>
-          {uiStatusOptions.filter(o=>o.key).map(o => (
-            <option key={o.key} value={o.key}>{o.label}</option>
+          {uiStatusOptions.filter(o=>o.key !== '').map(o => (
+            <option key={o.key || 'none'} value={o.key}>{o.label}</option>
           ))}
-          <option value="active">Active</option>
-          <option value="closing">Closing</option>
-          <option value="closed">Closed</option>
-          <option value="cancelled">Cancelled</option>
         </select>
       </div>
 
