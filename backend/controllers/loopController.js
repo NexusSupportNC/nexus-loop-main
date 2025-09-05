@@ -18,6 +18,10 @@ const loopController = {
         creator_id: req.user.id
       };
 
+      if (loopData.details && typeof loopData.details !== 'string') {
+        loopData.details = JSON.stringify(loopData.details);
+      }
+
       // Process uploaded images
       if (req.files && req.files.length > 0) {
         loopData.images = imageUtils.processUploadedImages(req.files);
@@ -162,6 +166,9 @@ const loopController = {
       }
 
       const updateData = { ...req.body };
+      if (updateData.details && typeof updateData.details !== 'string') {
+        updateData.details = JSON.stringify(updateData.details);
+      }
 
       // Handle image updates
       if (req.files && req.files.length > 0) {
