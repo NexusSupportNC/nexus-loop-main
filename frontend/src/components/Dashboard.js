@@ -74,11 +74,11 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
     } finally {
       setLoading(false);
     }
-  }, []);  // Remove addNotification dependency to prevent auto-scroll
+  }, [addNotification]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);  // Remove dependency to prevent re-renders and auto-scroll
+  }, [fetchDashboardData]);
 
   const handleExportCSV = async () => {
     try {
