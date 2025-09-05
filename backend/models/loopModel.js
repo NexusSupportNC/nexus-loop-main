@@ -63,6 +63,14 @@ try {
     db.prepare('ALTER TABLE loops ADD COLUMN compliance_reviewer_id INTEGER').run();
     console.log('Compliance columns added successfully');
   }
+
+  // Details JSON column
+  const hasDetailsColumn = tableInfo.some(column => column.name === 'details');
+  if (!hasDetailsColumn) {
+    console.log('Adding details column to loops table...');
+    db.prepare('ALTER TABLE loops ADD COLUMN details TEXT').run();
+    console.log('Details column added successfully');
+  }
 } catch (error) {
   console.error('Error during migration:', error);
   // Attempt to add columns individually
@@ -72,6 +80,7 @@ try {
   try { db.prepare('ALTER TABLE loops ADD COLUMN compliance_requested_at DATETIME').run(); } catch (e) {}
   try { db.prepare('ALTER TABLE loops ADD COLUMN compliance_reviewed_at DATETIME').run(); } catch (e) {}
   try { db.prepare('ALTER TABLE loops ADD COLUMN compliance_reviewer_id INTEGER').run(); } catch (e) {}
+  try { db.prepare('ALTER TABLE loops ADD COLUMN details TEXT').run(); } catch (e) {}
 }
 
 module.exports = {
@@ -79,8 +88,8 @@ module.exports = {
     const stmt = db.prepare(`
       INSERT INTO loops (
         type, sale, creator_id, start_date, end_date, tags, status,
-        property_address, client_name, client_email, client_phone, notes, images, participants
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        property_address, client_name, client_email, client_phone, notes, images, participants, details
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
       loopData.type,
@@ -96,7 +105,8 @@ module.exports = {
       loopData.client_phone,
       loopData.notes,
       loopData.images,
-      loopData.participants
+      loopData.participants,
+      loopData.details || null
     );
   },
 
@@ -171,7 +181,7 @@ module.exports = {
       UPDATE loops SET
         type = ?, sale = ?, start_date = ?, end_date = ?, tags = ?,
         status = ?, property_address = ?, client_name = ?, client_email = ?,
-        client_phone = ?, notes = ?, images = ?, participants = ?, updated_at = CURRENT_TIMESTAMP
+        client_phone = ?, notes = ?, images = ?, participants = ?, details = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `);
     return stmt.run(
@@ -188,6 +198,7 @@ module.exports = {
       loopData.notes,
       loopData.images,
       loopData.participants,
+      loopData.details || null,
       id
     );
   },
