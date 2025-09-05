@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { dateUtils } from '../utils/dateUtils';
 import ImageUpload from './ImageUpload';
 import { peopleAPI, apiUtils } from '../services/api';
-import { uiStatusOptions, uiStatusToApi } from '../constants/loopStatus';
 
 const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false }) => {
   const [formData, setFormData] = useState({
@@ -12,7 +11,6 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
     client_email: '',
     client_phone: '',
     sale: '',
-    status: 'pre-offer',
     start_date: dateUtils.getCurrentDate(),
     end_date: '',
     tags: '',
@@ -38,7 +36,6 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
         client_email: initialData.client_email || '',
         client_phone: initialData.client_phone || '',
         sale: initialData.sale || '',
-        status: initialData.status || 'pre-offer',
         start_date: dateUtils.formatDateForInput(initialData.start_date) || dateUtils.getCurrentDate(),
         end_date: dateUtils.formatDateForInput(initialData.end_date) || '',
         tags: initialData.tags || '',
@@ -183,9 +180,6 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
               ? customType.trim()
               : formData[key];
             formDataToSubmit.append(key, typeValue);
-          } else if (key === 'status') {
-            const apiStatus = uiStatusToApi[formData[key]] ?? formData[key];
-            formDataToSubmit.append(key, apiStatus);
           } else if (key === 'participants') {
             try {
               formDataToSubmit.append('participants', JSON.stringify(formData.participants || []));
@@ -270,22 +264,6 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
               </div>
             )}
 
-            <div className="form-group">
-              <label htmlFor="status">Status</label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                disabled={loading}
-              >
-                {uiStatusOptions.map(option => (
-                  <option key={option.key || 'none'} value={option.key}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
 
             <div className="form-group md:col-span-2">
               <label htmlFor="property_address">Property Address *</label>
