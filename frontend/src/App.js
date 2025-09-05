@@ -238,14 +238,10 @@ const AppContent = () => {
               <Route
                 path="/loops/all"
                 element={
-                  user?.role === 'admin' ? (
-                    <AllLoops
-                      user={user}
-                      addNotification={addNotification}
-                    />
-                  ) : (
-                    <Navigate to="/dashboard/agent" replace />
-                  )
+                  <AllLoops
+                    user={user}
+                    addNotification={addNotification}
+                  />
                 }
               />
 
