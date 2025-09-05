@@ -178,9 +178,7 @@ const EditLoop = ({ user, addNotification }) => {
             <span>Back</span>
           </button>
           <div className="h-6 w-px bg-gray-300"></div>
-          <nav className="text-sm text-gray-600">
-            <span className="sr-only">breadcrumb</span>
-          </nav>
+          <nav className="text-sm text-gray-600" aria-label="breadcrumb" />
         </div>
         
         <div className="flex justify-between items-start">
