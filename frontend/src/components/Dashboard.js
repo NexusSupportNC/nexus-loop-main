@@ -291,7 +291,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
                   </div>
                 ))}
                 <div className="text-center">
-                  <Link to={isAdmin ? "/dashboard/admin" : "/dashboard/agent"} className="btn btn-sm btn-outline">
+                  <Link to="/loops/all" className="btn btn-sm btn-outline">
                     View all loops
                   </Link>
                 </div>
