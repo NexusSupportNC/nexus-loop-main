@@ -33,6 +33,10 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
   // UI state for collapsible sections
   const [showListingReview, setShowListingReview] = useState(false);
   const [showBuyingReview, setShowBuyingReview] = useState(false);
+  const [showArchived, setShowArchived] = useState(true);
+  const [showType, setShowType] = useState(true);
+  const [showStatus, setShowStatus] = useState(true);
+  const [showReviewStage, setShowReviewStage] = useState(true);
 
   // Fields that API supports for sorting
   const apiSortableFields = new Set(['created_at', 'updated_at', 'end_date', 'sale', 'status', 'type']);
@@ -258,6 +262,12 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
       </div>
     );
   }
+
+  // Summaries for collapsed headers
+  const archivedSummary = archivedMode === 'only' ? 'Only' : archivedMode === 'all' ? 'All' : archivedMode === 'hide' ? 'Hide' : '';
+  const statusSummary = uiStatusOptions.find(o => o.key === statusFilter)?.label || '';
+  const typeSummary = typeFilter || '';
+  const reviewStageSummary = reviewFilters.reviewStage === 'unsubmitted' ? 'Unsubmitted' : '';
 
   const renderToolbar = () => (
     <div className="flex flex-wrap items-end gap-4">
@@ -512,55 +522,87 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
               <button className="btn btn-sm btn-outline" onClick={()=>{setSearchTerm('');setStatusFilter('');setTypeFilter('');setClosingThisMonth(false);setArchivedMode('hide');setReviewFilters({reviewStage:'',listingContract:[],buyingContract:[]});}}>Clear all</button>
             </div>
 
-            {/* Archived */}
-            <div className="filter-section">
-              <div className="filter-section-title">Archived</div>
-              <div className="segmented-control">
-                <button type="button" className={`segmented-option ${archivedMode==='hide' ? 'active' : ''}`} onClick={()=>setArchivedMode('hide')}>Hide</button>
-                <button type="button" className={`segmented-option ${archivedMode==='only' ? 'active' : ''}`} onClick={()=>setArchivedMode('only')}>Only</button>
-                <button type="button" className={`segmented-option ${archivedMode==='all' ? 'active' : ''}`} onClick={()=>setArchivedMode('all')}>All</button>
-              </div>
+            {/* Archived dropdown */}
+            <div className="accordion-section">
+              <button type="button" className="accordion-header" onClick={()=>setShowArchived(v=>!v)}>
+                <span>ARCHIVED</span>
+                <span className="ml-auto text-xs text-gray-500">{archivedSummary}</span>
+                <span className={`accordion-chevron ${showArchived ? 'open' : ''}`}>▾</span>
+              </button>
+              {showArchived && (
+                <div className="accordion-content">
+                  <div className="segmented-control">
+                    <button type="button" className={`segmented-option ${archivedMode==='hide' ? 'active' : ''}`} onClick={()=>setArchivedMode('hide')}>Hide</button>
+                    <button type="button" className={`segmented-option ${archivedMode==='only' ? 'active' : ''}`} onClick={()=>setArchivedMode('only')}>Only</button>
+                    <button type="button" className={`segmented-option ${archivedMode==='all' ? 'active' : ''}`} onClick={()=>setArchivedMode('all')}>All</button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Loop Type */}
-            <div className="filter-section">
-              <div className="filter-section-title">Loop Type</div>
-              <div className="filter-pills-grid">
-                {['No Transaction Type','Listing for Sale','Listing for Lease','Purchase','Lease','Real Estate Other','Other'].map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    className={`filter-pill ${typeFilter===t ? 'active' : ''}`}
-                    onClick={()=> setTypeFilter(prev => prev===t ? '' : t)}
-                  >{t}</button>
-                ))}
-              </div>
-              <button className="filter-clear" onClick={()=>setTypeFilter('')}>Clear</button>
+            {/* Loop Type dropdown */}
+            <div className="accordion-section">
+              <button type="button" className="accordion-header" onClick={()=>setShowType(v=>!v)}>
+                <span>LOOP TYPE</span>
+                <span className="ml-auto text-xs text-gray-500">{typeSummary}</span>
+                <span className={`accordion-chevron ${showType ? 'open' : ''}`}>▾</span>
+              </button>
+              {showType && (
+                <div className="accordion-content">
+                  <div className="filter-pills-grid">
+                    {['No Transaction Type','Listing for Sale','Listing for Lease','Purchase','Lease','Real Estate Other','Other'].map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={`filter-pill ${typeFilter===t ? 'active' : ''}`}
+                        onClick={()=> setTypeFilter(prev => prev===t ? '' : t)}
+                      >{t}</button>
+                    ))}
+                  </div>
+                  <button className="filter-clear" onClick={()=>setTypeFilter('')}>Clear</button>
+                </div>
+              )}
             </div>
 
-            {/* Loop Status */}
-            <div className="filter-section">
-              <div className="filter-section-title">Loop Status</div>
-              <div className="filter-pills-grid">
-                {uiStatusOptions.map((opt) => (
-                  <button
-                    key={opt.key || 'none'}
-                    type="button"
-                    className={`filter-pill ${statusFilter===opt.key ? 'active' : ''}`}
-                    onClick={()=> setStatusFilter(prev => prev===opt.key ? '' : opt.key)}
-                  >{opt.label}</button>
-                ))}
-              </div>
-              <button className="filter-clear" onClick={()=>setStatusFilter('')}>Clear</button>
+            {/* Loop Status dropdown */}
+            <div className="accordion-section">
+              <button type="button" className="accordion-header" onClick={()=>setShowStatus(v=>!v)}>
+                <span>LOOP STATUS</span>
+                <span className="ml-auto text-xs text-gray-500">{statusSummary}</span>
+                <span className={`accordion-chevron ${showStatus ? 'open' : ''}`}>▾</span>
+              </button>
+              {showStatus && (
+                <div className="accordion-content">
+                  <div className="filter-pills-grid">
+                    {uiStatusOptions.map((opt) => (
+                      <button
+                        key={opt.key || 'none'}
+                        type="button"
+                        className={`filter-pill ${statusFilter===opt.key ? 'active' : ''}`}
+                        onClick={()=> setStatusFilter(prev => prev===opt.key ? '' : opt.key)}
+                      >{opt.label}</button>
+                    ))}
+                  </div>
+                  <button className="filter-clear" onClick={()=>setStatusFilter('')}>Clear</button>
+                </div>
+              )}
             </div>
 
-            {/* Review Stage */}
-            <div className="filter-section">
-              <div className="filter-section-title">Review Stage</div>
-              <label className="filter-check-row">
-                <input type="checkbox" className="control-xs" checked={reviewFilters.reviewStage==='unsubmitted'} onChange={(e)=>setReviewFilters(prev=>({...prev, reviewStage: e.target.checked ? 'unsubmitted' : ''}))} />
-                <span>Unsubmitted</span>
-              </label>
+            {/* Review Stage dropdown */}
+            <div className="accordion-section">
+              <button type="button" className="accordion-header" onClick={()=>setShowReviewStage(v=>!v)}>
+                <span>REVIEW STAGE</span>
+                <span className="ml-auto text-xs text-gray-500">{reviewStageSummary}</span>
+                <span className={`accordion-chevron ${showReviewStage ? 'open' : ''}`}>▾</span>
+              </button>
+              {showReviewStage && (
+                <div className="accordion-content">
+                  <label className="filter-check-row">
+                    <input type="checkbox" className="control-xs" checked={reviewFilters.reviewStage==='unsubmitted'} onChange={(e)=>setReviewFilters(prev=>({...prev, reviewStage: e.target.checked ? 'unsubmitted' : ''}))} />
+                    <span>Unsubmitted</span>
+                  </label>
+                </div>
+              )}
             </div>
 
             {/* Listing/Contract Review */}
