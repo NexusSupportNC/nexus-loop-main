@@ -44,7 +44,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
   const appliedStatusApi = (uiStatusToApi[statusFilter] ?? statusFilter) || '';
   const appliedTypeApi = (typeFilter === 'No Transaction Type') ? '' : typeFilter;
 
-  const fetchLoops = async () => {
+  const fetchLoops = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -128,11 +128,11 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, archivedMode, reviewFilters, filters]);
 
   useEffect(() => {
     fetchLoops();
-  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, archivedMode, reviewFilters, filters]);
+  }, [fetchLoops]);
 
   const refreshLoops = async () => {
     await fetchLoops();
@@ -235,25 +235,6 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     return null;
   };
 
-  const getCountdownInfo = (endDate, status) => {
-    if (!endDate || status === 'closed' || status === 'cancelled') {
-      return null;
-    }
-
-    const countdownText = dateUtils.getCountdownText(endDate);
-    const dateStatus = dateUtils.getDateStatus(endDate);
-
-    let textColor = 'text-gray-600';
-    if (dateStatus === 'overdue') textColor = 'text-red-600';
-    else if (dateStatus === 'due-today') textColor = 'text-orange-600';
-    else if (dateStatus === 'due-soon') textColor = 'text-yellow-600';
-
-    return (
-      <div className={`text-sm ${textColor}`}>
-        {countdownText}
-      </div>
-    );
-  };
 
   if (loading) {
     return (
