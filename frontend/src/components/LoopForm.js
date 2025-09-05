@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { dateUtils } from '../utils/dateUtils';
 import ImageUpload from './ImageUpload';
 import { peopleAPI, apiUtils } from '../services/api';
+import { uiStatusOptions, uiStatusToApi } from '../constants/loopStatus';
 
 const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false }) => {
   const [formData, setFormData] = useState({
@@ -63,11 +64,11 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
       }
 
       // Check if type is a custom type (not in the predefined list)
-      const predefinedTypes = ['Listing for Sale', 'Listing for Lease', 'Purchase', 'Lease', 'Real Estate Other', 'Others'];
+      const predefinedTypes = ['Listing for Sale', 'Listing for Lease', 'Purchase', 'Lease', 'Real Estate Other', 'Other'];
       if (initialData.type && !predefinedTypes.includes(initialData.type)) {
         setCustomType(initialData.type);
         setShowCustomTypeInput(true);
-        setFormData(prev => ({ ...prev, type: 'Others' }));
+        setFormData(prev => ({ ...prev, type: 'Other' }));
       }
     }
   }, [initialData]);
@@ -95,7 +96,7 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
     const { name, value } = e.target;
 
     if (name === 'type') {
-      if (value === 'Others') {
+      if (value === 'Other') {
         setShowCustomTypeInput(true);
       } else {
         setShowCustomTypeInput(false);
@@ -123,8 +124,8 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
     // Required fields
     if (!formData.type.trim()) {
       newErrors.type = 'Transaction type is required';
-    } else if (formData.type === 'Others' && !customType.trim()) {
-      newErrors.type = 'Custom transaction type is required when "Others" is selected';
+    } else if (formData.type === 'Other' && !customType.trim()) {
+      newErrors.type = 'Custom transaction type is required when "Other" is selected';
     }
 
     if (!formData.property_address.trim()) {
@@ -177,11 +178,14 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
           if (key === 'sale' && formData[key]) {
             formDataToSubmit.append(key, parseFloat(formData[key]));
           } else if (key === 'type') {
-            // Use custom type if "Others" is selected and custom type is provided
-            const typeValue = formData[key] === 'Others' && customType.trim()
+            // Use custom type if "Other" is selected and custom type is provided
+            const typeValue = formData[key] === 'Other' && customType.trim()
               ? customType.trim()
               : formData[key];
             formDataToSubmit.append(key, typeValue);
+          } else if (key === 'status') {
+            const apiStatus = uiStatusToApi[formData[key]] ?? formData[key];
+            formDataToSubmit.append(key, apiStatus);
           } else if (key === 'participants') {
             try {
               formDataToSubmit.append('participants', JSON.stringify(formData.participants || []));
@@ -215,15 +219,7 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
     'Purchase',
     'Lease',
     'Real Estate Other',
-    'Others'
-  ];
-
-  const statusOptions = [
-    { value: 'pre-offer', label: 'Pre-offer' },
-    { value: 'under-contract', label: 'Under Contract' },
-    { value: 'withdrawn', label: 'Withdrawn' },
-    { value: 'sold', label: 'Sold' },
-    { value: 'terminated', label: 'Terminated' }
+    'Other'
   ];
 
   return (
@@ -264,12 +260,12 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
                   value={customType}
                   onChange={(e) => setCustomType(e.target.value)}
                   placeholder="Enter custom transaction type"
-                  className={!customType.trim() && formData.type === 'Others' ? 'border-red-500' : ''}
+                  className={!customType.trim() && formData.type === 'Other' ? 'border-red-500' : ''}
                   disabled={loading}
                   required
                 />
-                {!customType.trim() && formData.type === 'Others' && (
-                  <p className="text-red-500 text-sm mt-1">Custom type is required when "Others" is selected</p>
+                {!customType.trim() && formData.type === 'Other' && (
+                  <p className="text-red-500 text-sm mt-1">Custom type is required when "Other" is selected</p>
                 )}
               </div>
             )}
@@ -283,8 +279,8 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
                 onChange={handleChange}
                 disabled={loading}
               >
-                {statusOptions.map(option => (
-                  <option key={option.value} value={option.value}>
+                {uiStatusOptions.map(option => (
+                  <option key={option.key || 'none'} value={option.key}>
                     {option.label}
                   </option>
                 ))}
