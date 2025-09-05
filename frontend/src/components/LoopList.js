@@ -55,7 +55,8 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
         type: appliedTypeApi || '',
         sort: apiSortableFields.has(sortBy) ? sortBy : 'created_at',
         order: apiSortableFields.has(sortBy) ? (sortOrder || 'desc') : 'desc',
-        end_month: closingThisMonth ? 'current' : undefined
+        end_month: closingThisMonth ? 'current' : undefined,
+        ...(filters || {})
       };
 
       let results = [];
@@ -131,7 +132,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
 
   useEffect(() => {
     fetchLoops();
-  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, archivedMode, reviewFilters]);
+  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, archivedMode, reviewFilters, filters]);
 
   const refreshLoops = async () => {
     await fetchLoops();
