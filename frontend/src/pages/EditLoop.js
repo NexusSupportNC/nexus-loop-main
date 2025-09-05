@@ -228,22 +228,33 @@ const EditLoop = ({ user, addNotification }) => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-4">
-        <nav className="flex flex-wrap gap-2">
-          {[
-            ['documents','Documents'],
-            ['tasks','Tasks'],
-            ['people','People'],
-            ['details','Details'],
-            ['activity','Activity Log'],
-            ['notifications','Notifications']
-          ].map(([key,label]) => (
-            <button key={key} className={`px-4 py-2 rounded-t-md text-sm ${activeTab===key ? 'bg-white border border-b-0' : 'text-gray-600'}`} onClick={()=>setActiveTab(key)}>
-              {label}
-            </button>
-          ))}
-        </nav>
+      {/* Tabs - enhanced UI */}
+      <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl p-4 border border-slate-200 shadow-sm mb-4">
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+          <nav className="flex flex-wrap gap-2">
+            {[
+              { key: 'documents', label: 'Documents', icon: '📄' },
+              { key: 'tasks', label: 'Tasks', icon: '✅' },
+              { key: 'people', label: 'People', icon: '👥' },
+              { key: 'details', label: 'Details', icon: '📝' },
+              { key: 'activity', label: 'Activity Log', icon: '📊' },
+              { key: 'notifications', label: 'Notifications', icon: '🔔' }
+            ].map(tab => (
+              <button
+                key={tab.key}
+                className={`settings-tab-horizontal group ${activeTab===tab.key ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.key)}
+                aria-current={activeTab===tab.key ? 'page' : undefined}
+              >
+                <div className="settings-tab-horizontal-content">
+                  <div className="settings-tab-horizontal-icon"><span>{tab.icon}</span></div>
+                  <span className="settings-tab-horizontal-title">{tab.label}</span>
+                </div>
+                {activeTab===tab.key && <div className="settings-tab-horizontal-indicator"></div>}
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
 
       {/* Tab content */}
