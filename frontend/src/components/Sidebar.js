@@ -152,6 +152,7 @@ const Sidebar = ({ user, onLogout, collapsed, onToggle, isMobile, onNavigate }) 
       {/* User Info */}
       <div className="border-b border-gray-200">
         <div className={`flex items-center ${collapsed && !isMobile ? 'justify-center' : 'space-x-3'} p-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200`}>
+          <ProfileImage user={user} size="w-10 h-10" />
           {(!collapsed || isMobile) && (
             <div className="user-info flex-1">
               <p className="text-xs font-bold text-gray-900" style={{marginLeft: '10px'}}>{user?.name}</p>
