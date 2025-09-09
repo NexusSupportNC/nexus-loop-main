@@ -141,9 +141,17 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification, onSaved }) => {
     const country = findCountry(details.country);
     const province = findProvince(country, details.state_prov);
     const city = findCity(province, value);
+
+    let countyFromCity = '';
+    if (isNC && ncData.cityToCounties.size) {
+      const set = ncData.cityToCounties.get(city ? city.name : value) || new Set();
+      if (set.size === 1) countyFromCity = Array.from(set)[0];
+    }
+
     setDetails(prev => ({
       ...prev,
       city: city ? city.name : value,
+      county: countyFromCity || prev.county || '',
       zip_postal_code: ''
     }));
   };
