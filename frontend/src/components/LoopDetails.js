@@ -67,6 +67,49 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification, onSaved }) => {
 
   useEffect(() => { setDetails(initial); }, [initial]);
 
+  // Load NC CSV once (served from public/data/nc-zips.csv)
+  useEffect(() => {
+    let cancelled = false;
+    const loadNcCsv = async () => {
+      try {
+        const res = await fetch('/data/nc-zips.csv', { cache: 'no-store' });
+        if (!res.ok) return;
+        const text = await res.text();
+        const lines = text.split(/\r?\n/);
+        const rows = [];
+        const byZip = new Map();
+        const cityToZips = new Map();
+        const cityToCounties = new Map();
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i];
+          if (!line) continue;
+          line = line.replace(/\u00A0/g, ' ').trim();
+          if (!line || /^zip\s*code/i.test(line)) continue;
+          const parts = line.split(',');
+          if (parts.length < 3) continue;
+          const zip = String(parts[0]).replace(/\D/g, '');
+          const city = String(parts[1]).trim();
+          const county = String(parts.slice(2).join(',')).trim();
+          if (!zip || !city || !county) continue;
+          const row = { zip, city, county };
+          rows.push(row);
+          byZip.set(zip, row);
+          const zset = cityToZips.get(city) || new Set();
+          zset.add(zip);
+          cityToZips.set(city, zset);
+          const cset = cityToCounties.get(city) || new Set();
+          cset.add(county);
+          cityToCounties.set(city, cset);
+        }
+        const cities = Array.from(new Set(rows.map(r => r.city))).sort((a,b)=>a.localeCompare(b));
+        const counties = Array.from(new Set(rows.map(r => r.county))).sort((a,b)=>a.localeCompare(b));
+        if (!cancelled) setNcData({ rows, byZip, cityToZips, cityToCounties, cities, counties });
+      } catch {}
+    };
+    loadNcCsv();
+    return () => { cancelled = true; };
+  }, []);
+
   const handleChange = (key, value) => {
     setDetails(prev => ({ ...prev, [key]: value }));
   };
