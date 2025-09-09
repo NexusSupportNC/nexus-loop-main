@@ -156,6 +156,22 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification, onSaved }) => {
     }));
   };
 
+  const handleZipSelect = (zip) => {
+    if (isNC && ncData.byZip.size) {
+      const rec = ncData.byZip.get(zip);
+      if (rec) {
+        setDetails(prev => ({
+          ...prev,
+          zip_postal_code: zip,
+          city: rec.city,
+          county: rec.county
+        }));
+        return;
+      }
+    }
+    setDetails(prev => ({ ...prev, zip_postal_code: zip }));
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
