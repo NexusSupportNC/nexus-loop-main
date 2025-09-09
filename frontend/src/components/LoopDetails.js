@@ -6,8 +6,8 @@ const group = (title, fields) => ({ title, fields });
 
 const DETAILS_GROUPS = [
   group('Property Address', [
-    ['country','Country'], ['street_number','Street Number'], ['street_name','Street Name'], ['unit_number','Unit Number'], ['city','City'],
-    ['state_prov','State/Prov'], ['zip_postal_code','Zip/Postal Code'], ['county','County'], ['mls_number','MLS Number'], ['parcel_tax_id','Parcel/Tax ID']
+    ['country','Country'], ['street_number','Street Number'], ['street_name','Street Name'], ['unit_number','Unit Number'], ['state_prov','State/Province'],
+    ['city','City'], ['zip_postal_code','Zip/Postal Code'], ['county','County'], ['mls_number','MLS Number'], ['parcel_tax_id','Parcel/Tax ID']
   ]),
   group('Financials', [
     ['purchase_sale_price','Purchase/Sale Price'], ['sale_commission_total','Sale Commission Total'], ['sale_commission_split_buy','Sale Commission Split $ - Buy Side'],
