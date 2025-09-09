@@ -180,7 +180,7 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification, onSaved }) => {
                   const country = findCountry(details.country);
                   const province = findProvince(country, details.state_prov);
                   const city = findCity(province, details.city);
-                  const zips = city?.zips || [];
+                  const zips = (city?.zips && city.zips.length ? city.zips : (province?.zips || []));
                   const hasOptions = zips.length > 0;
                   return (
                     <div key={key} className="flex flex-col">
