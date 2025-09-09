@@ -234,8 +234,12 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification, onSaved }) => {
                 if (key === 'city') {
                   const country = findCountry(details.country);
                   const province = findProvince(country, details.state_prov);
-                  const cities = province?.cities || [];
-                  const hasOptions = cities.length > 0;
+                  let cities = province?.cities || [];
+                  let hasOptions = cities.length > 0;
+                  if (isNC && ncData.cities.length) {
+                    cities = ncData.cities.map(name => ({ name }));
+                    hasOptions = true;
+                  }
                   return (
                     <div key={key} className="flex flex-col">
                       <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
