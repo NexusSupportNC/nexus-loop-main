@@ -271,7 +271,7 @@ const EditLoop = ({ user, addNotification }) => {
       )}
 
       {activeTab === 'details' && (
-        <LoopDetails loopId={id} detailsRaw={loop.details} addNotification={addNotification} />
+        <LoopDetails loopId={id} detailsRaw={loop.details} addNotification={addNotification} onSaved={fetchLoop} />
       )}
 
       {activeTab === 'activity' && (

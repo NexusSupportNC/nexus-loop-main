@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { loopAPI, apiUtils } from '../services/api';
+import { locationData, findCountry, findProvince, findCity } from '../constants/locationData';
 
 const group = (title, fields) => ({ title, fields });
 
@@ -41,7 +42,7 @@ const DETAILS_GROUPS = [
   ])
 ];
 
-const LoopDetails = ({ loopId, detailsRaw, addNotification }) => {
+const LoopDetails = ({ loopId, detailsRaw, addNotification, onSaved }) => {
   const initial = useMemo(() => {
     try {
       if (!detailsRaw) return {};
@@ -61,11 +62,46 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification }) => {
     setDetails(prev => ({ ...prev, [key]: value }));
   };
 
+  // Dependent dropdown handlers for Country -> Province/State -> City -> Zip/Postal
+  const handleCountryChange = (value) => {
+    const country = findCountry(value);
+    setDetails(prev => ({
+      ...prev,
+      country: country ? country.name : value,
+      state_prov: '',
+      city: '',
+      zip_postal_code: ''
+    }));
+  };
+
+  const handleProvinceChange = (value) => {
+    const country = findCountry(details.country);
+    const province = findProvince(country, value);
+    setDetails(prev => ({
+      ...prev,
+      state_prov: province ? province.name : value,
+      city: '',
+      zip_postal_code: ''
+    }));
+  };
+
+  const handleCityChange = (value) => {
+    const country = findCountry(details.country);
+    const province = findProvince(country, details.state_prov);
+    const city = findCity(province, value);
+    setDetails(prev => ({
+      ...prev,
+      city: city ? city.name : value,
+      zip_postal_code: ''
+    }));
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
       await loopAPI.updateLoop(loopId, { details });
       addNotification('Details saved', 'success');
+      if (typeof onSaved === 'function') onSaved();
     } catch (e) {
       addNotification(apiUtils.getErrorMessage(e), 'error');
     } finally { setSaving(false); }
@@ -84,12 +120,91 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification }) => {
           <section key={g.title}>
             <h4 className="font-semibold text-gray-900 mb-3">{g.title}</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {g.fields.map(([key, label]) => (
-                <div key={key} className="flex flex-col">
-                  <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
-                  <input id={key} type="text" value={details[key] || ''} onChange={(e)=>handleChange(key, e.target.value)} />
-                </div>
-              ))}
+              {g.fields.map(([key, label]) => {
+                if (key === 'country') {
+                  const selected = findCountry(details.country);
+                  return (
+                    <div key={key} className="flex flex-col">
+                      <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
+                      <select id={key} value={selected?.name || details.country || ''} onChange={(e)=>handleCountryChange(e.target.value)}>
+                        <option value="">Select Country</option>
+                        {locationData.map(c => (
+                          <option key={c.code} value={c.name}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                }
+                if (key === 'state_prov') {
+                  const country = findCountry(details.country);
+                  const provinces = country?.provinces || [];
+                  const hasOptions = provinces.length > 0;
+                  return (
+                    <div key={key} className="flex flex-col">
+                      <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
+                      {hasOptions ? (
+                        <select id={key} value={details.state_prov || ''} onChange={(e)=>handleProvinceChange(e.target.value)}>
+                          <option value="">Select Province/State</option>
+                          {provinces.map(p => (
+                            <option key={p.code} value={p.name}>{p.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input id={key} type="text" value={details[key] || ''} onChange={(e)=>handleChange(key, e.target.value)} />
+                      )}
+                    </div>
+                  );
+                }
+                if (key === 'city') {
+                  const country = findCountry(details.country);
+                  const province = findProvince(country, details.state_prov);
+                  const cities = province?.cities || [];
+                  const hasOptions = cities.length > 0;
+                  return (
+                    <div key={key} className="flex flex-col">
+                      <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
+                      {hasOptions ? (
+                        <select id={key} value={details.city || ''} onChange={(e)=>handleCityChange(e.target.value)}>
+                          <option value="">Select City</option>
+                          {cities.map(c => (
+                            <option key={c.name} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input id={key} type="text" value={details[key] || ''} onChange={(e)=>handleChange(key, e.target.value)} />
+                      )}
+                    </div>
+                  );
+                }
+                if (key === 'zip_postal_code') {
+                  const country = findCountry(details.country);
+                  const province = findProvince(country, details.state_prov);
+                  const city = findCity(province, details.city);
+                  const zips = city?.zips || [];
+                  const hasOptions = zips.length > 0;
+                  return (
+                    <div key={key} className="flex flex-col">
+                      <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
+                      {hasOptions ? (
+                        <select id={key} value={details.zip_postal_code || ''} onChange={(e)=>handleChange('zip_postal_code', e.target.value)}>
+                          <option value="">Select Zip/Postal Code</option>
+                          {zips.map(z => (
+                            <option key={z} value={z}>{z}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input id={key} type="text" value={details[key] || ''} onChange={(e)=>handleChange(key, e.target.value)} />
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <div key={key} className="flex flex-col">
+                    <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
+                    <input id={key} type="text" value={details[key] || ''} onChange={(e)=>handleChange(key, e.target.value)} />
+                  </div>
+                );
+              })}
             </div>
           </section>
         ))}
