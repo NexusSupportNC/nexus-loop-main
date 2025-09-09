@@ -288,6 +288,31 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification, onSaved }) => {
                     </div>
                   );
                 }
+                if (key === 'county') {
+                  if (isNC && ncData.counties.length) {
+                    const countyOptions = details.city && ncData.cityToCounties.get(details.city)
+                      ? Array.from(ncData.cityToCounties.get(details.city)).sort()
+                      : ncData.counties;
+                    return (
+                      <div key={key} className="flex flex-col">
+                        <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
+                        <select id={key} value={details.county || ''} onChange={(e)=>handleChange('county', e.target.value)}>
+                          <option value="">Select County</option>
+                          {countyOptions.map(name => (
+                            <option key={name} value={name}>{name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={key} className="flex flex-col">
+                      <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
+                      <input id={key} type="text" value={details[key] || ''} onChange={(e)=>handleChange(key, e.target.value)} />
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={key} className="flex flex-col">
                     <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
