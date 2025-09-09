@@ -191,7 +191,25 @@ const loopController = {
         }
       }
 
-      const result = loopModel.updateLoop(id, updateData);
+      // Merge with existing loop values to support partial updates and preserve NOT NULL fields
+      const mergedData = {
+        type: typeof updateData.type !== 'undefined' ? updateData.type : loop.type,
+        sale: typeof updateData.sale !== 'undefined' ? updateData.sale : loop.sale,
+        start_date: typeof updateData.start_date !== 'undefined' ? updateData.start_date : loop.start_date,
+        end_date: typeof updateData.end_date !== 'undefined' ? updateData.end_date : loop.end_date,
+        tags: typeof updateData.tags !== 'undefined' ? updateData.tags : loop.tags,
+        status: typeof updateData.status !== 'undefined' ? updateData.status : loop.status,
+        property_address: typeof updateData.property_address !== 'undefined' ? updateData.property_address : loop.property_address,
+        client_name: typeof updateData.client_name !== 'undefined' ? updateData.client_name : loop.client_name,
+        client_email: typeof updateData.client_email !== 'undefined' ? updateData.client_email : loop.client_email,
+        client_phone: typeof updateData.client_phone !== 'undefined' ? updateData.client_phone : loop.client_phone,
+        notes: typeof updateData.notes !== 'undefined' ? updateData.notes : loop.notes,
+        images: typeof updateData.images !== 'undefined' ? updateData.images : loop.images,
+        participants: typeof updateData.participants !== 'undefined' ? updateData.participants : loop.participants,
+        details: typeof updateData.details !== 'undefined' ? updateData.details : loop.details
+      };
+
+      const result = loopModel.updateLoop(id, mergedData);
 
       if (result.changes === 0) {
         return res.status(404).json({
