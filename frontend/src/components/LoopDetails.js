@@ -260,13 +260,23 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification, onSaved }) => {
                   const country = findCountry(details.country);
                   const province = findProvince(country, details.state_prov);
                   const city = findCity(province, details.city);
-                  const zips = (city?.zips && city.zips.length ? city.zips : (province?.zips || []));
+
+                  let zips = (city?.zips && city.zips.length ? city.zips : (province?.zips || []));
+                  if (isNC && ncData.rows.length) {
+                    if (details.city) {
+                      const set = ncData.cityToZips.get(details.city) || new Set();
+                      zips = Array.from(set).sort();
+                    } else {
+                      zips = Array.from(new Set(ncData.rows.map(r => r.zip))).sort();
+                    }
+                  }
+
                   const hasOptions = zips.length > 0;
                   return (
                     <div key={key} className="flex flex-col">
                       <label htmlFor={key} className="text-sm text-gray-700 mb-1">{label}</label>
                       {hasOptions ? (
-                        <select id={key} value={details.zip_postal_code || ''} onChange={(e)=>handleChange('zip_postal_code', e.target.value)}>
+                        <select id={key} value={details.zip_postal_code || ''} onChange={(e)=>handleZipSelect(e.target.value)}>
                           <option value="">Select Zip/Postal Code</option>
                           {zips.map(z => (
                             <option key={z} value={z}>{z}</option>
