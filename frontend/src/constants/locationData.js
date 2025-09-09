@@ -1,6 +1,8 @@
 // Hierarchical location data for dependent dropdowns
 // Extendable: add more countries, provinces/states, cities, and zip/postal codes
 
+import ncZips from './zips/US-NC.json';
+
 export const locationData = [
   {
     code: 'US',
@@ -9,6 +11,7 @@ export const locationData = [
       {
         code: 'NC',
         name: 'North Carolina',
+        zips: ncZips,
         cities: [
           { name: 'Raleigh', zips: ['27601', '27603', '27606', '27609'] },
           { name: 'Durham', zips: ['27701', '27703', '27707'] },
