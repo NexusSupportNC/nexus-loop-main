@@ -56,6 +56,15 @@ const LoopDetails = ({ loopId, detailsRaw, addNotification, onSaved }) => {
   const [details, setDetails] = useState(initial);
   const [saving, setSaving] = useState(false);
 
+  // NC dataset (zip, city, county)
+  const [ncData, setNcData] = useState({ rows: [], byZip: new Map(), cityToZips: new Map(), cityToCounties: new Map(), cities: [], counties: [] });
+
+  const isNC = useMemo(() => {
+    const country = findCountry(details.country);
+    const province = findProvince(country, details.state_prov);
+    return (country?.name === 'United States' && province?.name === 'North Carolina') || details.state_prov === 'North Carolina';
+  }, [details.country, details.state_prov]);
+
   useEffect(() => { setDetails(initial); }, [initial]);
 
   const handleChange = (key, value) => {
