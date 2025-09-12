@@ -67,7 +67,7 @@ const Login = ({ onLogin, addNotification }) => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="auth-badge" aria-hidden="true">
-            <span style={{fontSize: 20}}>➡️</span>
+            <span className="login-badge-icon">➡️</span>
           </div>
           <div className="auth-brand-logo" aria-label="Nexus Realty NC logo">
             <img src="https://cdn.builder.io/api/v1/image/assets%2F85bb862fa7d3444da368cebb58a58672%2Ffd532ca9bfac46829ce054a28a9969e4?format=webp&width=800" alt="Nexus Realty NC" />
