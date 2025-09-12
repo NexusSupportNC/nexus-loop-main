@@ -7,8 +7,6 @@ const Login = ({ onLogin, addNotification }) => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
-
   const handleProviderSignIn = (provider) => {
     addNotification(`${provider} sign-in is not enabled in this demo`, 'info');
   };
@@ -157,31 +155,6 @@ const Login = ({ onLogin, addNotification }) => {
                 </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowDemo(!showDemo)}
-                className="mt-4 text-sm text-blue-600 hover:text-blue-500 w-full text-center"
-              >
-                {showDemo ? 'Hide' : 'Show'} Demo Credentials
-              </button>
-
-              {showDemo && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg text-sm">
-                  <h4 className="font-semibold mb-2">Demo Credentials:</h4>
-                  <div className="space-y-2">
-                    <div>
-                      <strong>Admin:</strong><br />
-                      Email: admin@nexusrealtync.co<br />
-                      Password: password123
-                    </div>
-                    <div>
-                      <strong>Agent:</strong><br />
-                      Email: agent@nexusrealtync.co<br />
-                      Password: password123
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
