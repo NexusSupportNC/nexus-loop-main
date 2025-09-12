@@ -9,6 +9,10 @@ const Login = ({ onLogin, addNotification }) => {
   const [loading, setLoading] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
 
+  const handleProviderSignIn = (provider) => {
+    addNotification(`${provider} sign-in is not enabled in this demo`, 'info');
+  };
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
