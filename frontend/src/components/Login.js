@@ -125,6 +125,15 @@ const Login = ({ onLogin, addNotification }) => {
               </button>
             </form>
 
+            <div className="provider-row">
+              <span className="text-xs text-gray-500">Or sign in with</span>
+              <div className="provider-buttons">
+                <button type="button" className="provider-button" aria-label="Sign in with Google" onClick={() => handleProviderSignIn('Google')}>G</button>
+                <button type="button" className="provider-button" aria-label="Sign in with Facebook" onClick={() => handleProviderSignIn('Facebook')}>f</button>
+                <button type="button" className="provider-button" aria-label="Sign in with Apple" onClick={() => handleProviderSignIn('Apple')}></button>
+              </div>
+            </div>
+
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
