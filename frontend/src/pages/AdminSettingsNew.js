@@ -78,7 +78,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
 
   // Tab configuration
   const tabs = [
-    { id: 'system', name: 'System Information', icon: '��️' },
+    { id: 'system', name: 'System Information', icon: '⚙️' },
     { id: 'appearance', name: 'Appearance', icon: '🎨' },
     { id: 'notifications', name: 'Email Notifications', icon: '📧' },
     { id: 'users', name: 'User Management', icon: '👥' },
@@ -2596,7 +2596,7 @@ const APIKeysManagement = ({ addNotification }) => {
         <div className="card-body space-y-6">
           <div className="bg-blue-50 p-4 rounded-lg">
             <div className="flex items-start">
-              <span className="text-2xl mr-3">���️</span>
+              <span className="text-2xl mr-3">����️</span>
               <div>
                 <h4 className="font-medium text-blue-900 mb-2">API Keys for Future Integrations</h4>
                 <p className="text-sm text-blue-700 mb-2">
