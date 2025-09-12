@@ -65,15 +65,17 @@ const Login = ({ onLogin, addNotification }) => {
   return (
     <div className="auth-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Nexus Realty NC
-            </h1>
-            <p className="text-sm text-gray-600">
-              Nexus Realty Loop Management Software
-            </p>
+        <div className="text-center">
+          <div className="auth-badge" aria-hidden="true">
+            <span style={{fontSize: 20}}>➡️</span>
           </div>
+          <div className="auth-brand-logo" aria-label="Nexus Realty NC logo">
+            <img src="https://cdn.builder.io/api/v1/image/assets%2F85bb862fa7d3444da368cebb58a58672%2Ffd532ca9bfac46829ce054a28a9969e4?format=webp&width=800" alt="Nexus Realty NC" />
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-1">Sign in with email</h2>
+          <p className="text-sm text-gray-600 mb-4">Make a new doc to bring your words, data, and teams together. For free</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Nexus Realty NC</h1>
+          <p className="text-sm text-gray-600">Nexus Realty Loop Management Software</p>
         </div>
 
         <div className="card">
