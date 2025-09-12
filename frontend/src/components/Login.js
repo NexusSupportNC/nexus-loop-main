@@ -73,8 +73,8 @@ const Login = ({ onLogin, addNotification }) => {
           <p className="text-sm text-gray-600">Nexus Realty Loop Management Software</p>
         </div>
 
-        <div className="card auth-card-elevated rounded-2xl">
-          <div className="card-body">
+        <div className="card auth-card-elevated rounded-2xl auth-card-layout">
+          <div className="card-body auth-card-body-center">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
