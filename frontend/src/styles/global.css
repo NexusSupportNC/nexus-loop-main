@@ -3256,6 +3256,10 @@ tr:hover {
 
 .auth-background { min-height: 100vh; background: linear-gradient(180deg, #e6f2ff 0%, #f3f8ff 55%, #ffffff 100%); display: flex; }
 .auth-card-elevated { border-radius: 16px; box-shadow: var(--shadow-lg); }
+.auth-card-layout { display: flex; flex-direction: column; justify-content: center; margin: 0 300px; }
+@media (max-width: 1024px) { .auth-card-layout { margin: 0 40px; } }
+@media (max-width: 640px) { .auth-card-layout { margin: 0; } }
+.auth-card-body-center { display: flex; flex-direction: column; justify-content: center; }
 .auth-badge { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; background: linear-gradient(180deg, #f0f4ff, #ffffff); border: 1px solid var(--border-primary); }
 .auth-brand-logo { width: 72px; height: 72px; border-radius: 9999px; overflow: hidden; border: 1px solid var(--border-primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; background: #000; }
 .auth-brand-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
