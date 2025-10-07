@@ -59,7 +59,14 @@ const LoopPeople = ({ loopId, participantsRaw, addNotification }) => {
             <label className="block text-sm text-gray-700 mb-1">Add person</label>
             <select className="w-full" value={selected} onChange={(e)=>setSelected(e.target.value)}>
               <option value="">Select a user...</option>
-              {allUsers.map(u => (<option key={u.id} value={u.id}>{u.name} ({u.email})</option>))}
+              {allUsers.map((u, index) => {
+                const optionKey = u?.id ?? u?.email ?? `index-${index}`;
+                return (
+                  <option key={`user-${optionKey}`} value={u.id}>
+                    {u.name} ({u.email})
+                  </option>
+                );
+              })}
             </select>
           </div>
           <button className="btn btn-primary" onClick={addParticipant}>Add</button>
@@ -69,15 +76,18 @@ const LoopPeople = ({ loopId, participantsRaw, addNotification }) => {
           <div className="text-gray-500">No participants yet</div>
         ) : (
           <div className="space-y-2">
-            {participants.map(p => (
-              <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <div className="font-medium">{p.name}</div>
-                  <div className="text-xs text-gray-500">{p.email}</div>
+            {participants.map((p, index) => {
+              const participantKey = p?.id ?? p?.email ?? `index-${index}`;
+              return (
+                <div key={`participant-${participantKey}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="font-medium">{p.name}</div>
+                    <div className="text-xs text-gray-500">{p.email}</div>
+                  </div>
+                  <button className="btn btn-sm btn-outline" onClick={()=>removeParticipant(p.id)}>Remove</button>
                 </div>
-                <button className="btn btn-sm btn-outline" onClick={()=>removeParticipant(p.id)}>Remove</button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
