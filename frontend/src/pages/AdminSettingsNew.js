@@ -61,7 +61,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
       setActiveTab(next);
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
-  }, [location.search, location.state]);
+  }, [location.search, location.state, activeTab]);
 
   // Keep URL in sync when switching tabs for shareable links
   useEffect(() => {
