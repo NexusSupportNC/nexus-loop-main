@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { loopAPI, apiUtils } from '../services/api';
 import { dateUtils } from '../utils/dateUtils';
 
@@ -8,17 +8,21 @@ const LoopTasks = ({ loopId, addNotification }) => {
   const [newDue, setNewDue] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const res = await loopAPI.listTasks(loopId);
       if (res.data.success) setTasks(res.data.tasks);
     } catch (e) {
       console.error(e);
-    } finally { setLoading(false); }
-  };
+    } finally {
+      setLoading(false);
+    }
+  }, [loopId]);
 
-  useEffect(() => { load(); }, [loopId]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const addTask = async () => {
     if (!newTitle.trim()) return;
