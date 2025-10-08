@@ -36,15 +36,19 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Token expired or invalid — clear and redirect once
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     } else if (error.response?.status === 403 && error.response?.data?.suspended) {
       // User account suspended
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -71,6 +75,7 @@ export const loopAPI = {
   // Dashboard and stats
   getStats: () => api.get('/loops/stats'),
   getClosingLoops: () => api.get('/loops/closing'),
+  getOverdueLoops: () => api.get('/loops/overdue'),
   
   // Export functions
   exportCSV: (params = {}) => {
@@ -92,6 +97,22 @@ export const loopAPI = {
     });
   },
 
+  // Documents
+  listDocuments: (loopId) => api.get(`/loops/${loopId}/documents`),
+  uploadDocuments: (loopId, formData) => api.post(`/loops/${loopId}/documents`, formData),
+  deleteDocument: (loopId, docId) => api.delete(`/loops/${loopId}/documents/${docId}`),
+
+  // Tasks
+  listTasks: (loopId) => api.get(`/loops/${loopId}/tasks`),
+  addTask: (loopId, data) => api.post(`/loops/${loopId}/tasks`, data),
+  updateTask: (loopId, taskId, data) => api.put(`/loops/${loopId}/tasks/${taskId}`, data),
+  deleteTask: (loopId, taskId) => api.delete(`/loops/${loopId}/tasks/${taskId}`),
+
+  // Compliance
+  requestCompliance: (loopId) => api.post(`/loops/${loopId}/compliance/request`),
+  approveCompliance: (loopId) => api.put(`/loops/${loopId}/compliance/approve`),
+  denyCompliance: (loopId) => api.put(`/loops/${loopId}/compliance/deny`),
+
   // Image operations
   deleteLoopImage: (loopId, filename) => api.delete(`/loops/${loopId}/images/${filename}`)
 };
@@ -100,6 +121,12 @@ export const loopAPI = {
 export const settingsAPI = {
   getSettings: () => api.get('/settings'),
   updateNotificationPreferences: (preferences) => api.put('/settings/notifications', preferences)
+};
+
+// People API calls (all authenticated users)
+export const peopleAPI = {
+  getUsers: (params = {}) => api.get('/people', { params }),
+  getUserById: (id) => api.get(`/people/${id}`)
 };
 
 // Admin API calls
@@ -172,6 +199,19 @@ export const adminAPI = {
 
 // Utility functions
 export const apiUtils = {
+  // JWT expiry check
+  isTokenExpired: (token) => {
+    try {
+      if (!token || token.split('.').length !== 3) return false;
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload || !payload.exp) return false;
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp <= now;
+    } catch {
+      return false;
+    }
+  },
+
   // Handle file download
   downloadFile: (blob, filename) => {
     const url = window.URL.createObjectURL(blob);
@@ -202,7 +242,13 @@ export const apiUtils = {
   isAuthenticated: () => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
-    return !!(token && user);
+    if (!(token && user)) return false;
+    if (apiUtils.isTokenExpired(token)) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return false;
+    }
+    return true;
   },
 
   // Get current user

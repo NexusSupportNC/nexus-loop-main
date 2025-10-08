@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { settingsAPI, adminAPI, loopAPI, apiUtils } from '../services/api';
 import { useConfirmation } from '../components/ConfirmationContext';
 import ProfileManagement from '../components/ProfileManagement';
@@ -42,7 +43,38 @@ const UserProfileImage = ({ user, size = 'w-8 h-8' }) => {
 };
 
 const AdminSettingsNew = ({ user, addNotification }) => {
-  const [activeTab, setActiveTab] = useState('system');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialTab = (() => {
+    const params = new URLSearchParams(location.search);
+    return (location.state && location.state.tab) ? location.state.tab : (params.get('tab') || 'system');
+  })();
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Set active tab from query string or navigation state
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    const stateTab = location.state && location.state.tab ? location.state.tab : null;
+    const next = stateTab || tabParam;
+    if (next && next !== activeTab) {
+      setActiveTab(next);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [location.search, location.state]);
+
+  // Keep URL in sync when switching tabs for shareable links
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (!activeTab) return;
+    params.set('tab', activeTab);
+    const newSearch = params.toString();
+    const currentSearch = location.search.replace(/^\?/, '');
+    if (newSearch !== currentSearch) {
+      navigate({ search: newSearch }, { replace: true });
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [activeTab, location.search, navigate]);
 
   // Tab configuration
   const tabs = [
@@ -69,7 +101,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
       case 'users':
         return <UserManagement addNotification={addNotification} />;
       case 'templates':
-        return <DocumentTemplates addNotification={addNotification} />;
+        return <DocumentTemplates addNotification={addNotification} initialOpenUpload={Boolean(location.state && location.state.openUpload)} />;
       case 'apikeys':
         return <APIKeysManagement addNotification={addNotification} />;
       case 'activity':
@@ -110,6 +142,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
                 className={`settings-tab-horizontal group ${
                   activeTab === tab.id ? 'active' : ''
                 }`}
+                aria-current={activeTab === tab.id ? 'page' : undefined}
               >
                 <div className="settings-tab-horizontal-content">
                   <div className="settings-tab-horizontal-icon">
@@ -1040,7 +1073,7 @@ const UserManagement = ({ addNotification }) => {
                     onClick={() => togglePasswordVisibility('confirmPassword')}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
                   >
-                    {passwordVisibility.confirmPassword ? '🙈' : '👁️'}
+                    {passwordVisibility.confirmPassword ? '🙈' : '👁��'}
                   </button>
                 </div>
               </div>
@@ -1288,6 +1321,8 @@ const ActivityLogs = ({ addNotification }) => {
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [activityView, setActivityView] = useState('system');
+  const [loopIdFilter, setLoopIdFilter] = useState('');
   const [filters, setFilters] = useState({
     actionType: '',
     startDate: '',
@@ -1297,14 +1332,16 @@ const ActivityLogs = ({ addNotification }) => {
 
   useEffect(() => {
     fetchLogs();
-  }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filters, activityView, loopIdFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchLogs = async () => {
     try {
       setLoading(true);
       const response = await adminAPI.getActivityLogs({
         ...filters,
-        limit: 100
+        limit: 100,
+        onlyLoop: activityView === 'loop',
+        loopId: activityView === 'loop' && loopIdFilter ? parseInt(loopIdFilter, 10) : undefined
       });
       
       if (response.data.success) {
@@ -1328,7 +1365,11 @@ const ActivityLogs = ({ addNotification }) => {
 
   const exportLogs = async () => {
     try {
-      const response = await adminAPI.exportActivityLogs(filters);
+      const response = await adminAPI.exportActivityLogs({
+        ...filters,
+        onlyLoop: activityView === 'loop',
+        loopId: activityView === 'loop' && loopIdFilter ? parseInt(loopIdFilter, 10) : undefined
+      });
       apiUtils.downloadFile(response.data, 'activity-logs.csv');
       addNotification('Activity logs exported successfully', 'success');
     } catch (error) {
@@ -1396,6 +1437,16 @@ const ActivityLogs = ({ addNotification }) => {
       {/* Filters and Export */}
       <div className="card">
         <div className="card-body">
+          <div className="tab-nav mb-4">
+            <button className={`tab-btn ${activityView === 'system' ? 'active' : ''}`} onClick={() => setActivityView('system')}>
+              <span className="tab-icon">🖥️</span>
+              <span>System Activity</span>
+            </button>
+            <button className={`tab-btn ${activityView === 'loop' ? 'active' : ''}`} onClick={() => setActivityView('loop')}>
+              <span className="tab-icon">🔁</span>
+              <span>Loop Activity</span>
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
@@ -1440,11 +1491,25 @@ const ActivityLogs = ({ addNotification }) => {
               />
             </div>
           </div>
+          {activityView === 'loop' && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Loop ID (optional)</label>
+                <input
+                  type="number"
+                  value={loopIdFilter}
+                  onChange={(e) => setLoopIdFilter(e.target.value)}
+                  placeholder="Filter by loop ID"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                />
+              </div>
+            </div>
+          )}
           <div className="flex justify-end space-x-3">
             <button onClick={exportLogs} className="btn btn-secondary">
               📤 Export Logs (CSV)
             </button>
-            <button onClick={clearLogs} className="btn btn-danger" style={{marginLeft: '50px'}}>
+            <button onClick={clearLogs} className="btn btn-danger ml-12">
               🗑️ Clear Logs
             </button>
           </div>
@@ -1745,7 +1810,7 @@ const DataExport = ({ addNotification }) => {
 };
 
 // Document Templates Component
-const DocumentTemplates = ({ addNotification }) => {
+const DocumentTemplates = ({ addNotification, initialOpenUpload = false }) => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploadModal, setUploadModal] = useState(false);
@@ -1763,6 +1828,12 @@ const DocumentTemplates = ({ addNotification }) => {
   useEffect(() => {
     fetchTemplates();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (initialOpenUpload) {
+      setUploadModal(true);
+    }
+  }, [initialOpenUpload]);
 
   const fetchTemplates = async () => {
     try {
@@ -2387,6 +2458,7 @@ const FieldMappingModal = ({ template, onClose, onSave, addNotification }) => {
   );
 };
 
+
 // API Keys Management Component
 const APIKeysManagement = ({ addNotification }) => {
   const [apiKeys, setApiKeys] = useState({
@@ -2524,7 +2596,7 @@ const APIKeysManagement = ({ addNotification }) => {
         <div className="card-body space-y-6">
           <div className="bg-blue-50 p-4 rounded-lg">
             <div className="flex items-start">
-              <span className="text-2xl mr-3">���️</span>
+              <span className="text-2xl mr-3">����️</span>
               <div>
                 <h4 className="font-medium text-blue-900 mb-2">API Keys for Future Integrations</h4>
                 <p className="text-sm text-blue-700 mb-2">
@@ -2626,7 +2698,7 @@ const APIKeysManagement = ({ addNotification }) => {
                   title="Copy Secret Key"
                   type="button"
                 >
-                  📋 Copy
+                  ��� Copy
                 </button>
                 <button
                   onClick={generateSecretKey}

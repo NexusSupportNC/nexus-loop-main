@@ -72,13 +72,19 @@ const Sidebar = ({ user, onLogout, collapsed, onToggle, isMobile, onNavigate }) 
       path: '/loops/new',
       icon: '➕'
     },
+    // All Loops placed next to Create Loop (visible to all roles)
+    {
+      name: 'All Loops',
+      path: '/loops/all',
+      icon: '📋'
+    },
     // People section for both Agents and Admins
     {
       name: 'People',
       path: '/people',
       icon: '👥'
     },
-    // Admin-only archive
+    // Admin-only Archive
     ...(user?.role === 'admin' ? [{
       name: 'Archive',
       path: '/archive',
@@ -146,6 +152,7 @@ const Sidebar = ({ user, onLogout, collapsed, onToggle, isMobile, onNavigate }) 
       {/* User Info */}
       <div className="border-b border-gray-200">
         <div className={`flex items-center ${collapsed && !isMobile ? 'justify-center' : 'space-x-3'} p-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200`}>
+          <ProfileImage user={user} size="w-10 h-10" />
           {(!collapsed || isMobile) && (
             <div className="user-info flex-1">
               <p className="text-xs font-bold text-gray-900" style={{marginLeft: '10px'}}>{user?.name}</p>

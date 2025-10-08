@@ -7,7 +7,9 @@ const Login = ({ onLogin, addNotification }) => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
+  const handleProviderSignIn = (provider) => {
+    addNotification(`${provider} sign-in is not enabled in this demo`, 'info');
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -59,21 +61,18 @@ const Login = ({ onLogin, addNotification }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="auth-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Nexus Realty NC
-            </h1>
-            <p className="text-sm text-gray-600">
-              Nexus Realty Loop Management Software
-            </p>
+        <div className="text-center">
+          <div className="auth-brand-logo" aria-label="Nexus Realty NC logo">
+            <img src="https://cdn.builder.io/api/v1/image/assets%2F85bb862fa7d3444da368cebb58a58672%2Ffd532ca9bfac46829ce054a28a9969e4?format=webp&width=800" alt="Nexus Realty NC" />
           </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Nexus Realty NC</h1>
+          <p className="text-sm text-gray-600">Nexus Realty Loop Management Software</p>
         </div>
 
-        <div className="card">
-          <div className="card-body">
+        <div className="card auth-card-elevated rounded-2xl auth-card-layout">
+          <div className="card-body auth-card-body-center">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
@@ -119,6 +118,13 @@ const Login = ({ onLogin, addNotification }) => {
               </button>
             </form>
 
+            <div className="provider-row">
+              <span className="text-xs text-gray-500">Or sign in with</span>
+              <div className="provider-buttons">
+                <button type="button" className="provider-button" aria-label="Sign in with Google" onClick={() => handleProviderSignIn('Google')}>G</button>
+              </div>
+            </div>
+
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -149,31 +155,6 @@ const Login = ({ onLogin, addNotification }) => {
                 </button>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowDemo(!showDemo)}
-                className="mt-4 text-sm text-blue-600 hover:text-blue-500 w-full text-center"
-              >
-                {showDemo ? 'Hide' : 'Show'} Demo Credentials
-              </button>
-
-              {showDemo && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg text-sm">
-                  <h4 className="font-semibold mb-2">Demo Credentials:</h4>
-                  <div className="space-y-2">
-                    <div>
-                      <strong>Admin:</strong><br />
-                      Email: admin@nexusrealtync.co<br />
-                      Password: password123
-                    </div>
-                    <div>
-                      <strong>Agent:</strong><br />
-                      Email: agent@nexusrealtync.co<br />
-                      Password: password123
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

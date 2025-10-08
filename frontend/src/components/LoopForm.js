@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { dateUtils } from '../utils/dateUtils';
 import ImageUpload from './ImageUpload';
+import { peopleAPI, apiUtils } from '../services/api';
 
 const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false }) => {
   const [formData, setFormData] = useState({
@@ -10,11 +11,11 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
     client_email: '',
     client_phone: '',
     sale: '',
-    status: 'pre-offer',
     start_date: dateUtils.getCurrentDate(),
     end_date: '',
     tags: '',
     notes: '',
+    participants: [],
     ...initialData
   });
 
@@ -23,6 +24,8 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
   const [showCustomTypeInput, setShowCustomTypeInput] = useState(false);
 
   const [errors, setErrors] = useState({});
+  const [allUsers, setAllUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
@@ -33,11 +36,19 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
         client_email: initialData.client_email || '',
         client_phone: initialData.client_phone || '',
         sale: initialData.sale || '',
-        status: initialData.status || 'pre-offer',
         start_date: dateUtils.formatDateForInput(initialData.start_date) || dateUtils.getCurrentDate(),
         end_date: dateUtils.formatDateForInput(initialData.end_date) || '',
         tags: initialData.tags || '',
-        notes: initialData.notes || ''
+        notes: initialData.notes || '',
+        participants: (() => {
+          try {
+            if (Array.isArray(initialData.participants)) return initialData.participants;
+            if (typeof initialData.participants === 'string' && initialData.participants.trim()) {
+              return JSON.parse(initialData.participants);
+            }
+          } catch (e) {}
+          return [];
+        })()
       });
 
       // Set existing images if available
@@ -50,20 +61,39 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
       }
 
       // Check if type is a custom type (not in the predefined list)
-      const predefinedTypes = ['Listing for Sale', 'Listing for Lease', 'Purchase', 'Lease', 'Real Estate Other', 'Others'];
+      const predefinedTypes = ['Listing for Sale', 'Listing for Lease', 'Purchase', 'Lease', 'Real Estate Other', 'Other'];
       if (initialData.type && !predefinedTypes.includes(initialData.type)) {
         setCustomType(initialData.type);
         setShowCustomTypeInput(true);
-        setFormData(prev => ({ ...prev, type: 'Others' }));
+        setFormData(prev => ({ ...prev, type: 'Other' }));
       }
     }
   }, [initialData]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoadingUsers(true);
+        const res = await peopleAPI.getUsers();
+        if (res.data && res.data.success) {
+          // include admins and agents
+          setAllUsers(res.data.users || []);
+        }
+      } catch (error) {
+        // non-blocking; just leave list empty
+        console.warn('Failed to load users:', apiUtils.getErrorMessage(error));
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     if (name === 'type') {
-      if (value === 'Others') {
+      if (value === 'Other') {
         setShowCustomTypeInput(true);
       } else {
         setShowCustomTypeInput(false);
@@ -91,8 +121,8 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
     // Required fields
     if (!formData.type.trim()) {
       newErrors.type = 'Transaction type is required';
-    } else if (formData.type === 'Others' && !customType.trim()) {
-      newErrors.type = 'Custom transaction type is required when "Others" is selected';
+    } else if (formData.type === 'Other' && !customType.trim()) {
+      newErrors.type = 'Custom transaction type is required when "Other" is selected';
     }
 
     if (!formData.property_address.trim()) {
@@ -145,11 +175,17 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
           if (key === 'sale' && formData[key]) {
             formDataToSubmit.append(key, parseFloat(formData[key]));
           } else if (key === 'type') {
-            // Use custom type if "Others" is selected and custom type is provided
-            const typeValue = formData[key] === 'Others' && customType.trim()
+            // Use custom type if "Other" is selected and custom type is provided
+            const typeValue = formData[key] === 'Other' && customType.trim()
               ? customType.trim()
               : formData[key];
             formDataToSubmit.append(key, typeValue);
+          } else if (key === 'participants') {
+            try {
+              formDataToSubmit.append('participants', JSON.stringify(formData.participants || []));
+            } catch (e) {
+              formDataToSubmit.append('participants', '[]');
+            }
           } else {
             formDataToSubmit.append(key, formData[key]);
           }
@@ -177,15 +213,7 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
     'Purchase',
     'Lease',
     'Real Estate Other',
-    'Others'
-  ];
-
-  const statusOptions = [
-    { value: 'pre-offer', label: 'Pre-offer' },
-    { value: 'under-contract', label: 'Under Contract' },
-    { value: 'withdrawn', label: 'Withdrawn' },
-    { value: 'sold', label: 'Sold' },
-    { value: 'terminated', label: 'Terminated' }
+    'Other'
   ];
 
   return (
@@ -226,32 +254,16 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
                   value={customType}
                   onChange={(e) => setCustomType(e.target.value)}
                   placeholder="Enter custom transaction type"
-                  className={!customType.trim() && formData.type === 'Others' ? 'border-red-500' : ''}
+                  className={!customType.trim() && formData.type === 'Other' ? 'border-red-500' : ''}
                   disabled={loading}
                   required
                 />
-                {!customType.trim() && formData.type === 'Others' && (
-                  <p className="text-red-500 text-sm mt-1">Custom type is required when "Others" is selected</p>
+                {!customType.trim() && formData.type === 'Other' && (
+                  <p className="text-red-500 text-sm mt-1">Custom type is required when "Other" is selected</p>
                 )}
               </div>
             )}
 
-            <div className="form-group">
-              <label htmlFor="status">Status</label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                disabled={loading}
-              >
-                {statusOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
 
             <div className="form-group md:col-span-2">
               <label htmlFor="property_address">Property Address *</label>
@@ -391,6 +403,136 @@ const LoopForm = ({ initialData = {}, onSubmit, loading = false, isEdit = false 
                   {dateUtils.getCountdownText(formData.end_date)}
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Participants & Access */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="text-lg font-semibold">Participants & Access</h3>
+        </div>
+        <div className="card-body">
+          <div className="space-y-4">
+            {(formData.participants || []).map((p, idx) => (
+              <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                <div className="form-group">
+                  <label>Name</label>
+                  <input
+                    type="text"
+                    value={p.name || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.map((pp, i) => i === idx ? { ...pp, name: e.target.value } : pp)
+                    }))}
+                    placeholder="Full name"
+                    disabled={loading}
+                  />
+                  <div className="mt-2">
+                    <label className="block text-xs text-gray-600 mb-1">Select Registered User (optional)</label>
+                    <select
+                      value={p._selectedUserId || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        if (!selectedId) {
+                          setFormData(prev => ({
+                            ...prev,
+                            participants: prev.participants.map((pp, i) => i === idx ? { ...pp, _selectedUserId: '' } : pp)
+                          }));
+                          return;
+                        }
+                        const user = allUsers.find(u => String(u.id) === String(selectedId));
+                        if (user) {
+                          setFormData(prev => ({
+                            ...prev,
+                            participants: prev.participants.map((pp, i) => i === idx ? { ...pp, _selectedUserId: String(user.id), name: user.name || pp.name, email: user.email || pp.email } : pp)
+                          }));
+                        }
+                      }}
+                      className="w-full px-2 py-1 border border-gray-300 rounded"
+                      disabled={loading || loadingUsers}
+                    >
+                      <option value="">-- Select a user --</option>
+                      {allUsers.map(u => (
+                        <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={p.email || ''}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.map((pp, i) => i === idx ? { ...pp, email: e.target.value } : pp)
+                    }))}
+                    placeholder="email@example.com"
+                    disabled={loading}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Role</label>
+                  <select
+                    value={p.role || 'agent'}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.map((pp, i) => i === idx ? { ...pp, role: e.target.value } : pp)
+                    }))}
+                    disabled={loading}
+                  >
+                    <option value="agent">Agent</option>
+                    <option value="client">Client</option>
+                    <option value="service-provider">Service Provider</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Permission</label>
+                  <select
+                    value={p.permission || 'view'}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.map((pp, i) => i === idx ? { ...pp, permission: e.target.value } : pp)
+                    }))}
+                    disabled={loading}
+                  >
+                    <option value="view">View-only</option>
+                    <option value="edit">Edit</option>
+                  </select>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      participants: prev.participants.filter((_, i) => i !== idx)
+                    }))}
+                    disabled={loading}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <div>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => setFormData(prev => ({
+                  ...prev,
+                  participants: [...(prev.participants || []), { name: '', email: '', role: 'agent', permission: 'view' }]
+                }))}
+                disabled={loading}
+              >
+                + Add Participant
+              </button>
+              {loadingUsers && <p className="text-xs text-gray-500 mt-2">Loading users...</p>}
+              <p className="text-xs text-gray-500 mt-2">Admins can view all loops regardless of access settings.</p>
             </div>
           </div>
         </div>

@@ -50,6 +50,15 @@ const adminController = {
         limit: req.query.limit ? parseInt(req.query.limit) : 100
       };
 
+      // Control inclusion/exclusion of loop activity via query params
+      if (req.query.onlyLoop === 'true') {
+        filters.onlyLoopActivity = true;
+      } else if (req.query.includeLoop === 'true') {
+        filters.excludeLoopActivity = false;
+      } else {
+        filters.excludeLoopActivity = true; // default: show system logs only
+      }
+
       const logs = ActivityLogger.getActivityLogs(filters);
       const stats = ActivityLogger.getActivityStats();
 
@@ -358,6 +367,15 @@ const adminController = {
         endDate: req.query.endDate,
         search: req.query.search
       };
+
+      // Control inclusion/exclusion of loop activity via query params
+      if (req.query.onlyLoop === 'true') {
+        filters.onlyLoopActivity = true;
+      } else if (req.query.includeLoop === 'true') {
+        filters.excludeLoopActivity = false;
+      } else {
+        filters.excludeLoopActivity = true;
+      }
 
       const logs = ActivityLogger.getActivityLogs(filters);
 

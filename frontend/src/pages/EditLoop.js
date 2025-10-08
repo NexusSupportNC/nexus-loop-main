@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import LoopForm from '../components/LoopForm';
 import LoopDocuments from '../components/LoopDocuments';
+import LoopFiles from '../components/LoopFiles';
+import LoopTasks from '../components/LoopTasks';
+import LoopDetails from '../components/LoopDetails';
+import LoopPeople from '../components/LoopPeople';
 import { loopAPI, apiUtils } from '../services/api';
 import { dateUtils } from '../utils/dateUtils';
 
@@ -9,6 +12,8 @@ const EditLoop = ({ user, addNotification }) => {
   const [loop, setLoop] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
+  const [activity, setActivity] = useState([]);
+  const [activeTab, setActiveTab] = useState('documents'); // documents | tasks | people | details | activity | notifications
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -36,18 +41,25 @@ const EditLoop = ({ user, addNotification }) => {
     fetchLoop();
   }, [fetchLoop]);
 
+  useEffect(() => {
+    const loadActivity = async () => {
+      try {
+        const res = await fetch(`/api/loops/${id}/activity`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+        const data = await res.json();
+        if (data.success) setActivity(data.logs);
+      } catch (e) { /* ignore */ }
+    };
+    loadActivity();
+  }, [id]);
+
   const handleSubmit = async (formData) => {
     setLoading(true);
 
     try {
       const response = await loopAPI.updateLoop(id, formData);
-      
       if (response.data.success) {
         addNotification('Transaction loop updated successfully!', 'success');
-        
-        // Redirect to appropriate dashboard
-        const dashboardPath = user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/agent';
-        navigate(dashboardPath);
+        fetchLoop();
       }
     } catch (error) {
       const errorMessage = apiUtils.getErrorMessage(error);
@@ -159,25 +171,21 @@ const EditLoop = ({ user, addNotification }) => {
         <div className="flex items-center space-x-4 mb-4">
           <button
             onClick={() => navigate(-1)}
-            className="text-gray-600 hover:text-gray-900 transition-colors"
+            className="btn btn-outline btn-sm flex items-center gap-2 btn-back-wide"
+            aria-label="Back"
           >
-            ← Back
+            <span>←</span>
+            <span>Back</span>
           </button>
           <div className="h-6 w-px bg-gray-300"></div>
-          <nav className="text-sm text-gray-600">
-            <span>Dashboard</span>
-            <span className="mx-2">/</span>
-            <span className="text-gray-900 font-medium">Edit Loop #{id}</span>
-          </nav>
+          <nav className="text-sm text-gray-600" aria-label="breadcrumb" />
         </div>
         
         <div className="flex justify-between items-start">
           <div>
-            <div className="flex items-center space-x-3 mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">
-                Edit Loop #{id}
-              </h1>
-              {getStatusBadge(loop.status)}
+            <div className="flex items-center mb-2">
+              <h1 className="text-3xl font-bold text-gray-900">Edit Loop #{id}</h1>
+              <div className="ml-4">{getStatusBadge(loop.status)}</div>
             </div>
             <p className="text-gray-600">
               {loop.property_address}
@@ -190,7 +198,7 @@ const EditLoop = ({ user, addNotification }) => {
           <div className="flex space-x-3">
             <button
               onClick={handleExportPDF}
-              className="btn btn-secondary btn-sm flex items-center gap-1"
+              className="btn btn-secondary btn-sm flex items-center gap-1 loop-action-spaced"
             >
               📄 Export PDF
             </button>
@@ -199,14 +207,14 @@ const EditLoop = ({ user, addNotification }) => {
               <>
                 <button
                   onClick={handleArchive}
-                  className="btn btn-secondary btn-sm flex items-center gap-1"
+                  className="btn btn-secondary btn-sm flex items-center gap-1 loop-action-spaced"
                 >
                   📦 Archive
                 </button>
 
                 <button
                   onClick={handleDelete}
-                  className="btn btn-danger btn-sm flex items-center gap-1"
+                  className="btn btn-danger btn-sm flex items-center gap-1 loop-action-spaced"
                 >
                   🗑️ Delete
                 </button>
@@ -216,111 +224,108 @@ const EditLoop = ({ user, addNotification }) => {
         </div>
       </div>
 
-      {/* Loop Info Card */}
-      <div className="card mb-8">
-        <div className="card-body">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Transaction Details</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Type:</span>
-                  <span className="font-medium">{loop.type}</span>
+      {/* Tabs - enhanced UI to match diff */}
+      <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl p-4 border border-slate-200 shadow-sm mb-4">
+        <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+          <nav className="flex flex-wrap loop-tabs">
+            {[
+              { key: 'documents', label: 'Documents' },
+              { key: 'tasks', label: 'Tasks' },
+              { key: 'people', label: 'People' },
+              { key: 'details', label: 'Details' },
+              { key: 'activity', label: 'Activity Log' },
+              { key: 'notifications', label: 'Notifications' }
+            ].map(tab => (
+              <button
+                key={tab.key}
+                className={`settings-tab-horizontal loop-tab group ${activeTab===tab.key ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.key)}
+                aria-current={activeTab===tab.key ? 'page' : undefined}
+              >
+                <div className="settings-tab-horizontal-content">
+                  <span className="settings-tab-horizontal-title">{tab.label}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sale Amount:</span>
-                  <span className="font-medium">
-                    {loop.sale ? `$${parseFloat(loop.sale).toLocaleString()}` : 'N/A'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Timeline</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Start Date:</span>
-                  <span className="font-medium">{dateUtils.formatDate(loop.start_date)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">End Date:</span>
-                  <span className="font-medium">{dateUtils.formatDate(loop.end_date)}</span>
-                </div>
-                {loop.end_date && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Time Left:</span>
-                    <span className="font-medium text-blue-600">
-                      {dateUtils.getCountdownText(loop.end_date)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Client Info</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Name:</span>
-                  <span className="font-medium">{loop.client_name || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Email:</span>
-                  <span className="font-medium">{loop.client_email || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Phone:</span>
-                  <span className="font-medium">{loop.client_phone || 'N/A'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+                {activeTab===tab.key && <div className="settings-tab-horizontal-indicator"></div>}
+              </button>
+            ))}
+          </nav>
         </div>
       </div>
 
-      {/* Edit Form */}
-      <LoopForm
-        initialData={loop}
-        onSubmit={handleSubmit}
-        loading={loading}
-        isEdit={true}
-      />
-
-      {/* Documents Section */}
-      {user?.role === 'admin' && (
-        <div className="mt-8">
-          <LoopDocuments loopId={id} addNotification={addNotification} />
+      {/* Tab content */}
+      {activeTab === 'documents' && (
+        <div className="space-y-6">
+          <LoopFiles loopId={id} user={user} addNotification={addNotification} />
+          {user?.role === 'admin' && (
+            <LoopDocuments loopId={id} addNotification={addNotification} />
+          )}
         </div>
       )}
 
-      {/* Activity Log Placeholder */}
-      <div className="mt-8 card">
-        <div className="card-header">
-          <h3 className="text-lg font-semibold">Activity Log</h3>
+      {activeTab === 'tasks' && (
+        <LoopTasks loopId={id} addNotification={addNotification} />
+      )}
+
+      {activeTab === 'people' && (
+        <LoopPeople loopId={id} participantsRaw={loop.participants} addNotification={addNotification} />
+      )}
+
+      {activeTab === 'details' && (
+        <LoopDetails loopId={id} detailsRaw={loop.details} addNotification={addNotification} onSaved={fetchLoop} />
+      )}
+
+      {activeTab === 'activity' && (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="text-lg font-semibold">Activity Log</h3>
+          </div>
+          <div className="card-body">
+            {activity.length === 0 ? (
+              <div className="text-gray-500">No recent activity</div>
+            ) : (
+              <div className="space-y-2">
+                {activity.map((log) => (
+                  <div key={log.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{log.action_type.replaceAll('_',' ')}</div>
+                      <div className="text-xs text-gray-500">{dateUtils.formatDateTime(log.created_at)} • {log.user_name || 'User'} ({log.user_email || ''})</div>
+                      <div className="text-xs text-gray-600">{log.description}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="card-body">
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">Loop created</p>
-                <p className="text-xs text-gray-500">
-                  {dateUtils.formatDateTime(loop.created_at)} by {loop.creator_name}
-                </p>
-              </div>
-            </div>
-            
-            {loop.updated_at !== loop.created_at && (
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Loop updated</p>
-                  <p className="text-xs text-gray-500">
-                    {dateUtils.formatDateTime(loop.updated_at)}
-                  </p>
-                </div>
-              </div>
+      )}
+
+      {activeTab === 'notifications' && (
+        <div className="card">
+          <div className="card-header"><h3 className="text-lg font-semibold">Notifications</h3></div>
+          <div className="card-body text-center text-gray-500">
+            You don't have any notifications
+          </div>
+        </div>
+      )}
+
+      {/* Compliance Actions */}
+      <div className="mt-8 card">
+        <div className="card-header"><h3 className="text-lg font-semibold">Compliance Review</h3></div>
+        <div className="card-body flex gap-2 items-center">
+          <div className="text-sm">Status: <span className="font-medium capitalize">{loop.compliance_status || 'none'}</span></div>
+          {loop.compliance_status === 'pending' && loop.compliance_requested_at && (
+            <div className="text-xs text-gray-500">Requested {dateUtils.formatDateTime(loop.compliance_requested_at)}</div>
+          )}
+          <div className="ml-auto flex gap-2">
+            {user?.role !== 'admin' && (
+              <button className="btn btn-outline btn-sm" onClick={async ()=>{ try { await loopAPI.requestCompliance(id); addNotification('Compliance review requested','success'); fetchLoop(); } catch(e){ addNotification(apiUtils.getErrorMessage(e),'error'); } }}>Request Review</button>
+            )}
+            {user?.role === 'admin' && (
+              <>
+                <button className="btn btn-success btn-sm" onClick={async ()=>{ try { await loopAPI.approveCompliance(id); addNotification('Compliance approved','success'); fetchLoop(); } catch(e){ addNotification(apiUtils.getErrorMessage(e),'error'); } }}>Approve</button>
+                <button className="btn btn-danger btn-sm" onClick={async ()=>{ try { await loopAPI.denyCompliance(id); addNotification('Compliance denied','success'); fetchLoop(); } catch(e){ addNotification(apiUtils.getErrorMessage(e),'error'); } }}>Deny</button>
+              </>
             )}
           </div>
         </div>

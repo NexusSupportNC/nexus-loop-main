@@ -1,18 +1,37 @@
 const User = require('../models/userModel');
+const Organization = require('../models/organizationModel');
 
 const peopleController = {
   // Get all users with search functionality
   getUsers: async (req, res) => {
     try {
       const { search } = req.query;
-      const users = User.searchUsers(search);
-      
-      // Remove password from response
+      const users = Organization.searchUsersWithOrganizations(search);
+
+      // Remove password from response and format organization data
       const safeUsers = users.map(user => {
         const { password, ...safeUser } = user;
+
+        // Parse organization data
+        if (safeUser.organizations && safeUser.organization_ids) {
+          const orgNames = safeUser.organizations.split(',');
+          const orgIds = safeUser.organization_ids.split(',');
+
+          safeUser.organizationList = orgNames.map((name, index) => ({
+            id: parseInt(orgIds[index]),
+            name: name
+          })).filter(org => org.name); // Filter out empty names
+        } else {
+          safeUser.organizationList = [];
+        }
+
+        // Remove the raw organization fields
+        delete safeUser.organizations;
+        delete safeUser.organization_ids;
+
         return safeUser;
       });
-      
+
       res.json({ success: true, users: safeUsers });
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -25,13 +44,18 @@ const peopleController = {
     try {
       const { id } = req.params;
       const user = User.findById(id);
-      
+
       if (!user) {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
-      
+
+      // Get user's organizations
+      const organizations = Organization.getOrganizationsForUser(id);
+
       // Remove password from response
       const { password, ...safeUser } = user;
+      safeUser.organizationList = organizations;
+
       res.json({ success: true, user: safeUser });
     } catch (error) {
       console.error('Error fetching user:', error);

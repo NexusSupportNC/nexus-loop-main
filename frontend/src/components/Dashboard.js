@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { loopAPI, apiUtils } from '../services/api';
+import { loopAPI, apiUtils, adminAPI } from '../services/api';
 import { dateUtils } from '../utils/dateUtils';
 
 
@@ -14,8 +14,23 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
     closing_soon: 0
   });
   const [closingLoops, setClosingLoops] = useState([]);
+  const [overdueLoops, setOverdueLoops] = useState([]);
   const [recentLoops, setRecentLoops] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Inline Document Template upload
+  const [uploadModal, setUploadModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [templateData, setTemplateData] = useState({ name: '', description: '', category: 'contract' });
+  const categories = [
+    { value: 'contract', label: 'Contract' },
+    { value: 'listing', label: 'Listing Agreement' },
+    { value: 'disclosure', label: 'Disclosure' },
+    { value: 'addendum', label: 'Addendum' },
+    { value: 'notice', label: 'Notice' },
+    { value: 'other', label: 'Other' }
+  ];
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -27,10 +42,18 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
         setStats(statsResponse.data.stats);
       }
 
-      // Fetch closing loops
-      const closingResponse = await loopAPI.getClosingLoops();
+      // Fetch closing loops and overdue loops
+      const [closingResponse, overdueResponse] = await Promise.all([
+        loopAPI.getClosingLoops(),
+        loopAPI.getOverdueLoops()
+      ]);
+
       if (closingResponse.data.success) {
         setClosingLoops(closingResponse.data.loops);
+      }
+
+      if (overdueResponse.data.success) {
+        setOverdueLoops(overdueResponse.data.loops);
       }
 
       // Fetch recent loops
@@ -40,8 +63,14 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
       }
 
     } catch (error) {
-      const errorMessage = apiUtils.getErrorMessage(error);
-      addNotification(errorMessage, 'error');
+      // Avoid noise on expired sessions (401 handled by interceptor)
+      if (error.response?.status !== 401) {
+        const errorMessage = apiUtils.getErrorMessage(error);
+        if (!error.code || error.code !== 'NETWORK_ERROR') {
+          addNotification(errorMessage, 'error');
+        }
+        console.error('Dashboard data fetch error:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -93,7 +122,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
   }
 
   return (
-    <div className="dashboard-container space-y-6" style={{marginTop: 0, paddingTop: 0}}>
+    <div className="dashboard-container space-y-6 dashboard-top-reset">
       {/* Welcome Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -119,8 +148,20 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
 
 
 
+      {/* Overdue Alert */}
+      {!isAdmin && overdueLoops.length > 0 && (
+        <div className="alert alert-danger">
+          <div className="flex items-center space-x-2">
+            <span className="text-lg">🚨</span>
+            <div>
+              <strong>Critical:</strong> You have {overdueLoops.length} overdue loop{overdueLoops.length !== 1 ? 's' : ''} that require immediate attention.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Closing Soon Alert */}
-      {closingLoops.length > 0 && (
+      {!isAdmin && closingLoops.length > 0 && (
         <div className="alert alert-warning">
           <div className="flex items-center space-x-2">
             <span className="text-lg">⚠️</span>
@@ -132,25 +173,28 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Closing Soon */}
+        {/* Attention Required Loops */}
+        {isAdmin ? null : (
         <div className="card">
           <div className="card-header">
-            <h3 className="text-lg font-semibold">Loops Closing Soon</h3>
+            <h3 className="text-lg font-semibold">Loops Requiring Attention</h3>
           </div>
           <div className="card-body">
-            {closingLoops.length === 0 ? (
+            {overdueLoops.length === 0 && closingLoops.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-4xl mb-2">✅</div>
-                <p className="text-gray-600">No loops closing in the next 3 days</p>
+                <p className="text-gray-600">No loops requiring immediate attention</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {closingLoops.slice(0, 5).map((loop) => (
-                  <div key={loop.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                {/* Show overdue loops first */}
+                {overdueLoops.slice(0, 3).map((loop) => (
+                  <div key={`overdue-${loop.id}`} className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <span className="font-medium">#{loop.id}</span>
                         {getStatusBadge(loop.status)}
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-medium">OVERDUE</span>
                       </div>
                       <p className="text-sm text-gray-600 truncate">
                         {loop.property_address}
@@ -168,11 +212,35 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
                       </p>
                     </div>
                   </div>
-                ))}
-                {closingLoops.length > 5 && (
+                ))}\n                {/* Show closing soon loops */}
+                {closingLoops.slice(0, Math.max(2, 5 - overdueLoops.length)).map((loop) => (
+                  <div key={`closing-${loop.id}`} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">#{loop.id}</span>
+                        {getStatusBadge(loop.status)}
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">CLOSING SOON</span>
+                      </div>
+                      <p className="text-sm text-gray-600 truncate">
+                        {loop.property_address}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Client: {loop.client_name}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-amber-600">
+                        {dateUtils.getCountdownText(loop.end_date)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {dateUtils.formatDate(loop.end_date)}
+                      </p>
+                    </div>
+                  </div>
+                ))}\n                {(overdueLoops.length + closingLoops.length) > 5 && (
                   <div className="text-center">
                     <Link to={isAdmin ? "/dashboard/admin" : "/dashboard/agent"} className="btn btn-sm btn-outline">
-                      View all {closingLoops.length} closing loops
+                      View all {overdueLoops.length + closingLoops.length} loops requiring attention
                     </Link>
                   </div>
                 )}
@@ -181,6 +249,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
           </div>
         </div>
 
+        )}
         {/* Recent Activity */}
         <div className="card">
           <div className="card-header">
@@ -222,7 +291,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
                   </div>
                 ))}
                 <div className="text-center">
-                  <Link to={isAdmin ? "/dashboard/admin" : "/dashboard/agent"} className="btn btn-sm btn-outline">
+                  <Link to="/loops/all" className="btn btn-sm btn-outline">
                     View all loops
                   </Link>
                 </div>
@@ -300,7 +369,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-200 rounded-full mb-4 group-hover:bg-blue-300 transition-colors duration-300">
                 <span className="text-2xl">📋</span>
               </div>
-              <div className="text-4xl font-black text-blue-700 group-hover:text-blue-800 transition-colors duration-300" style={{margin: '-5px 0 16px'}}>
+              <div className="text-4xl font-black text-blue-700 group-hover:text-blue-800 transition-colors duration-300 stat-value-offset">
                 {stats.total}
               </div>
               <div className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-1">Total Loops</div>
@@ -317,7 +386,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-200 rounded-full mb-4 group-hover:bg-green-300 transition-colors duration-300">
                 <span className="text-2xl">🟢</span>
               </div>
-              <div className="text-4xl font-black text-green-700 group-hover:text-green-800 transition-colors duration-300" style={{margin: '-5px 0 16px'}}>
+              <div className="text-4xl font-black text-green-700 group-hover:text-green-800 transition-colors duration-300 stat-value-offset">
                 {stats.active}
               </div>
               <div className="text-sm font-bold text-green-800 uppercase tracking-wider mb-1">Active</div>
@@ -332,7 +401,7 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
             <div className="absolute top-0 right-0 w-20 h-20 bg-amber-300 rounded-full opacity-20 -mr-10 -mt-10"></div>
             <div className="relative z-10 text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-200 rounded-full mb-4 group-hover:bg-amber-300 transition-colors duration-300">
-                <span className="text-2xl" style={{paddingTop: '1px'}}>⏰</span>
+                <span className="text-2xl icon-nudge-top-1">⏰</span>
               </div>
               <div className="text-4xl font-black text-amber-700 mb-2 group-hover:text-amber-800 transition-colors duration-300">
                 {stats.closing_soon}
@@ -425,10 +494,10 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Document Templates</h3>
               <div className="flex space-x-2">
-                <Link to="/settings" className="btn btn-sm btn-primary">
+                <button onClick={() => { setUploadModal(true); setSelectedFile(null); setTemplateData({ name: '', description: '', category: 'contract' }); }} className="btn btn-sm btn-primary">
                   📤 Import Templates
-                </Link>
-                <Link to="/settings" className="btn btn-sm btn-outline">
+                </button>
+                <Link to="/settings?tab=templates" state={{ tab: 'templates' }} className="btn btn-sm btn-outline">
                   📋 Saved Templates
                 </Link>
               </div>
@@ -462,6 +531,79 @@ const Dashboard = ({ user, addNotification, isAdmin = false }) => {
                   <div className="text-xs text-purple-800 font-medium">Save & Reuse</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {uploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Upload Document Template</h3>
+              <button onClick={() => setUploadModal(false)} className="text-gray-400 hover:text-gray-600">×</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Document File *</label>
+                <input type="file" accept=".pdf,.doc,.docx" className="w-full px-3 py-2 border border-gray-300 rounded-md" onChange={(e)=>{
+                  const file = e.target.files && e.target.files[0];
+                  if (!file) return;
+                  const allowed = ['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                  if (!allowed.includes(file.type)) {
+                    addNotification('Please select a PDF or Word document', 'error');
+                    setSelectedFile(null);
+                    return;
+                  }
+                  setSelectedFile(file);
+                  if (!templateData.name) {
+                    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+                    setTemplateData(prev => ({ ...prev, name: nameWithoutExt }));
+                  }
+                }} />
+                <p className="text-xs text-gray-500 mt-1">Supported: PDF, DOC, DOCX (Max 10MB)</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Template Name *</label>
+                <input type="text" value={templateData.name} onChange={(e)=> setTemplateData(prev=>({ ...prev, name: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Enter template name" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select value={templateData.category} onChange={(e)=> setTemplateData(prev=>({ ...prev, category: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                  {categories.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea value={templateData.description} onChange={(e)=> setTemplateData(prev=>({ ...prev, description: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Optional description" />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={()=> setUploadModal(false)} className="btn btn-outline">Cancel</button>
+              <button className="btn btn-primary" disabled={uploading} onClick={async ()=>{
+                if (!selectedFile || !templateData.name.trim()) { addNotification('Please select a file and provide a template name', 'error'); return; }
+                try {
+                  setUploading(true);
+                  const formData = new FormData();
+                  formData.append('templateFile', selectedFile);
+                  formData.append('name', templateData.name);
+                  formData.append('description', templateData.description);
+                  formData.append('category', templateData.category);
+                  const res = await adminAPI.uploadDocumentTemplate(formData);
+                  if (res.data.success) {
+                    addNotification('Document template uploaded successfully', 'success');
+                    setUploadModal(false);
+                    setSelectedFile(null);
+                    setTemplateData({ name: '', description: '', category: 'contract' });
+                  }
+                } catch (err) {
+                  addNotification(apiUtils.getErrorMessage(err), 'error');
+                } finally {
+                  setUploading(false);
+                }
+              }}>
+                {uploading ? (<><div className="spinner"></div>Uploading...</>) : 'Upload Template'}
+              </button>
             </div>
           </div>
         </div>

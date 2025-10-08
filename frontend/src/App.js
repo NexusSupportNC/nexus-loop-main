@@ -10,6 +10,7 @@ import AdminSettings from './pages/AdminSettingsNew';
 import Archive from './pages/Archive';
 import ProfileSettings from './pages/ProfileSettings';
 import People from './pages/People';
+import AllLoops from './pages/AllLoops';
 import ScrollToTop from './components/ScrollToTop';
 import NotificationToast from './components/NotificationToast';
 import { NotificationProvider, useNotifications } from './components/NotificationContext';
@@ -96,7 +97,7 @@ const AppContent = () => {
     return (
       <>
         <Router>
-          <div className="min-h-screen bg-gray-50">
+          <div className="min-h-screen">
             <Routes>
               <Route
                 path="/login"
@@ -231,6 +232,16 @@ const AppContent = () => {
                   ) : (
                     <Navigate to="/dashboard/agent" replace />
                   )
+                }
+              />
+
+              <Route
+                path="/loops/all"
+                element={
+                  <AllLoops
+                    user={user}
+                    addNotification={addNotification}
+                  />
                 }
               />
 
