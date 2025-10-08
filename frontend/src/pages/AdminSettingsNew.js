@@ -598,7 +598,7 @@ const UserManagement = ({ addNotification }) => {
   };
 
   const suspendUser = async (user) => {
-    const confirmed = await confirmAction({
+    await confirmAction({
       title: 'Suspend User',
       message: `Are you sure you want to suspend ${user.name}? They will not be able to log in until unsuspended.`,
       confirmText: 'Suspend User',
@@ -628,7 +628,7 @@ const UserManagement = ({ addNotification }) => {
   };
 
   const unsuspendUser = async (user) => {
-    const confirmed = await confirmAction({
+    await confirmAction({
       title: 'Unsuspend User',
       message: `Are you sure you want to unsuspend ${user.name}? They will be able to log in again.`,
       confirmText: 'Unsuspend User',
@@ -658,7 +658,7 @@ const UserManagement = ({ addNotification }) => {
   };
 
   const promoteToAdmin = async (user) => {
-    const confirmed = await confirmAction({
+    await confirmAction({
       title: 'Promote to Admin',
       message: `Are you sure you want to promote ${user.name} to admin role? This will grant them full administrative privileges.`,
       confirmText: 'Promote to Admin',
@@ -681,7 +681,7 @@ const UserManagement = ({ addNotification }) => {
   };
 
   const deleteUser = async (user) => {
-    const confirmed = await confirmAction({
+    await confirmAction({
       title: 'Delete User',
       message: `Are you sure you want to permanently delete ${user.name}? This action cannot be undone and will remove all their data from the system.`,
       confirmText: 'Delete User',
