@@ -5,7 +5,7 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "concurrently \"nodemon backend/server.js\" \"cd frontend && PORT=3002 npm start\"",
+    "dev": "concurrently \"nodemon backend/server.js\" \"cd frontend && npm start\"",
     "server": "nodemon backend/server.js",
     "client": "cd frontend && npm start",
     "install-all": "npm install && cd frontend && npm install"
