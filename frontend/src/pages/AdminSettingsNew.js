@@ -2478,16 +2478,9 @@ const APIKeysManagement = ({ addNotification }) => {
     { name: 'Stripe', enabled: false, description: 'Payment processing integration' }
   ]);
 
-  useEffect(() => {
-    fetchAPIKeys();
-  }, []);
-
-  const fetchAPIKeys = async () => {
+  const fetchAPIKeys = useCallback(async () => {
     try {
       setLoading(true);
-      // This would fetch from backend API
-      // const response = await adminAPI.getAPIKeys();
-      // For now, using local storage as mock
       const storedKeys = localStorage.getItem('nexus_api_keys');
       if (storedKeys) {
         setApiKeys(JSON.parse(storedKeys));
@@ -2497,7 +2490,11 @@ const APIKeysManagement = ({ addNotification }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addNotification]);
+
+  useEffect(() => {
+    fetchAPIKeys();
+  }, [fetchAPIKeys]);
 
   const handleInputChange = (field, value) => {
     setApiKeys(prev => ({
