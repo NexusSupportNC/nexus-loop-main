@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const NotificationToast = ({ notifications, removeNotification }) => {
   return (
@@ -19,28 +19,26 @@ const ToastItem = ({ notification, onRemove, zIndex }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
+  const handleRemove = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onRemove(notification.id);
+    }, 300);
+  }, [notification.id, onRemove]);
+
   useEffect(() => {
-    // Trigger entrance animation
     const timer = setTimeout(() => setIsVisible(true), 10);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    // Auto-remove after duration
     if (notification.duration && notification.duration > 0) {
       const timer = setTimeout(() => {
         handleRemove();
       }, notification.duration);
       return () => clearTimeout(timer);
     }
-  }, [notification.duration]);
-
-  const handleRemove = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onRemove(notification.id);
-    }, 300); // Animation duration
-  };
+  }, [notification.duration, handleRemove]);
 
   const getToastStyles = () => {
     const baseStyles = 'toast-item';
