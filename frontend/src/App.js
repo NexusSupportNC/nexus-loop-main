@@ -55,6 +55,7 @@ const AppContent = () => {
   }, []);
 
   const handleLogin = (token, userData) => {
+    console.log('🔐 Login successful:', { token: token?.substring(0, 20) + '...', userData });
     apiUtils.setAuth(token, userData);
     setIsAuthenticated(true);
     setUser(userData);
