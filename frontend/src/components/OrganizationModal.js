@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const OrganizationModal = ({ organization, user, isOpen, onClose, addNotification }) => {
@@ -10,20 +10,20 @@ const OrganizationModal = ({ organization, user, isOpen, onClose, addNotificatio
   const [addingUser, setAddingUser] = useState(false);
   const [removingUser, setRemovingUser] = useState(null);
 
-  useEffect(() => {
-    if (isOpen && organization) {
-      fetchOrganizationDetails();
-    }
-  }, [isOpen, organization]);
+  const organizationId = organization?.id;
 
-  const fetchOrganizationDetails = async () => {
+  const fetchOrganizationDetails = useCallback(async () => {
+    if (!organizationId) {
+      return;
+    }
+
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/organizations/${organization.id}`, {
+      const response = await axios.get(`/api/organizations/${organizationId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.data.success) {
         setOrgDetails(response.data.organization);
       }
@@ -33,7 +33,13 @@ const OrganizationModal = ({ organization, user, isOpen, onClose, addNotificatio
     } finally {
       setLoading(false);
     }
-  };
+  }, [organizationId, addNotification]);
+
+  useEffect(() => {
+    if (isOpen && organizationId) {
+      fetchOrganizationDetails();
+    }
+  }, [isOpen, organizationId, fetchOrganizationDetails]);
 
   const fetchAvailableUsers = async () => {
     try {

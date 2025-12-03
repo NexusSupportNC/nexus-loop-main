@@ -8,6 +8,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const peopleRoutes = require('./routes/peopleRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
 const errorHandler = require('./middleware/errorHandler');
+const { initializeAdminPassword } = require('./setup/initialize-admin');
 
 const app = express();
 
@@ -41,4 +42,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
+
+  // Initialize admin password
+  initializeAdminPassword();
 });

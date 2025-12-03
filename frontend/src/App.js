@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Login from './components/Login';
@@ -24,6 +24,7 @@ const AppContent = () => {
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const justLoggedInRef = useRef(false);
   const { notifications, removeNotification, addNotification } = useNotifications();
 
   useEffect(() => {
@@ -55,9 +56,11 @@ const AppContent = () => {
   }, []);
 
   const handleLogin = (token, userData) => {
+    console.log('🔐 Login successful:', { token: token?.substring(0, 20) + '...', userData });
     apiUtils.setAuth(token, userData);
     setIsAuthenticated(true);
     setUser(userData);
+    justLoggedInRef.current = true;
   };
 
   const handleLogout = () => {

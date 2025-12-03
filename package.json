@@ -8,7 +8,9 @@
     "dev": "concurrently \"nodemon backend/server.js\" \"cd frontend && npm start\"",
     "server": "nodemon backend/server.js",
     "client": "cd frontend && npm start",
-    "install-all": "npm install && cd frontend && npm install"
+    "install-all": "npm install && cd frontend && npm install",
+    "postinstall": "npm install --prefix frontend",
+    "build": "npm run build --prefix frontend"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

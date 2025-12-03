@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { settingsAPI, adminAPI, loopAPI, apiUtils } from '../services/api';
 import { useConfirmation } from '../components/ConfirmationContext';
@@ -50,6 +50,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
     return (location.state && location.state.tab) ? location.state.tab : (params.get('tab') || 'system');
   })();
   const [activeTab, setActiveTab] = useState(initialTab);
+  const lastSyncedTabRef = useRef(null);
 
   // Set active tab from query string or navigation state
   useEffect(() => {
@@ -57,20 +58,23 @@ const AdminSettingsNew = ({ user, addNotification }) => {
     const tabParam = params.get('tab');
     const stateTab = location.state && location.state.tab ? location.state.tab : null;
     const next = stateTab || tabParam;
-    if (next && next !== activeTab) {
+    if (next && next !== activeTab && next !== lastSyncedTabRef.current) {
       setActiveTab(next);
+      lastSyncedTabRef.current = next;
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
-  }, [location.search, location.state]);
+  }, [location.search, location.state, activeTab]);
 
   // Keep URL in sync when switching tabs for shareable links
   useEffect(() => {
+    if (!activeTab || activeTab === lastSyncedTabRef.current) return;
+
     const params = new URLSearchParams(location.search);
-    if (!activeTab) return;
     params.set('tab', activeTab);
     const newSearch = params.toString();
     const currentSearch = location.search.replace(/^\?/, '');
     if (newSearch !== currentSearch) {
+      lastSyncedTabRef.current = activeTab;
       navigate({ search: newSearch }, { replace: true });
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
@@ -598,7 +602,7 @@ const UserManagement = ({ addNotification }) => {
   };
 
   const suspendUser = async (user) => {
-    const confirmed = await confirmAction({
+    await confirmAction({
       title: 'Suspend User',
       message: `Are you sure you want to suspend ${user.name}? They will not be able to log in until unsuspended.`,
       confirmText: 'Suspend User',
@@ -628,7 +632,7 @@ const UserManagement = ({ addNotification }) => {
   };
 
   const unsuspendUser = async (user) => {
-    const confirmed = await confirmAction({
+    await confirmAction({
       title: 'Unsuspend User',
       message: `Are you sure you want to unsuspend ${user.name}? They will be able to log in again.`,
       confirmText: 'Unsuspend User',
@@ -658,7 +662,7 @@ const UserManagement = ({ addNotification }) => {
   };
 
   const promoteToAdmin = async (user) => {
-    const confirmed = await confirmAction({
+    await confirmAction({
       title: 'Promote to Admin',
       message: `Are you sure you want to promote ${user.name} to admin role? This will grant them full administrative privileges.`,
       confirmText: 'Promote to Admin',
@@ -681,7 +685,7 @@ const UserManagement = ({ addNotification }) => {
   };
 
   const deleteUser = async (user) => {
-    const confirmed = await confirmAction({
+    await confirmAction({
       title: 'Delete User',
       message: `Are you sure you want to permanently delete ${user.name}? This action cannot be undone and will remove all their data from the system.`,
       confirmText: 'Delete User',
@@ -2478,16 +2482,9 @@ const APIKeysManagement = ({ addNotification }) => {
     { name: 'Stripe', enabled: false, description: 'Payment processing integration' }
   ]);
 
-  useEffect(() => {
-    fetchAPIKeys();
-  }, []);
-
-  const fetchAPIKeys = async () => {
+  const fetchAPIKeys = useCallback(async () => {
     try {
       setLoading(true);
-      // This would fetch from backend API
-      // const response = await adminAPI.getAPIKeys();
-      // For now, using local storage as mock
       const storedKeys = localStorage.getItem('nexus_api_keys');
       if (storedKeys) {
         setApiKeys(JSON.parse(storedKeys));
@@ -2497,7 +2494,11 @@ const APIKeysManagement = ({ addNotification }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addNotification]);
+
+  useEffect(() => {
+    fetchAPIKeys();
+  }, [fetchAPIKeys]);
 
   const handleInputChange = (field, value) => {
     setApiKeys(prev => ({
@@ -2870,12 +2871,14 @@ const AppearanceSettings = ({ addNotification }) => {
 };
 
 const SystemInformation = ({ addNotification }) => {
-  const [systemStatus, setSystemStatus] = useState('Online');
-  const [systemVersion] = useState('v1.0.0');
+  const systemStatus = 'Online';
+  const systemVersion = 'v1.0.0';
   const [uptime, setUptime] = useState('0d 0h 0m');
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
   useEffect(() => {
+    setLastUpdated(new Date());
+
     // Calculate uptime (simple simulation)
     const startTime = Date.now();
     const updateUptime = () => {
@@ -2885,7 +2888,6 @@ const SystemInformation = ({ addNotification }) => {
       const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
       setUptime(`${days}d ${hours}h ${minutes}m`);
-      setLastUpdated(new Date());
     };
 
     updateUptime();

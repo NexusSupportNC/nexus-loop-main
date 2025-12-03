@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const CreateOrganizationModal = ({ isOpen, onClose, onSuccess, addNotification }) => {
@@ -11,23 +11,14 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSuccess, addNotification }
   const [loading, setLoading] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchAvailableUsers();
-      // Reset form when modal opens
-      setFormData({ name: '', description: '' });
-      setSelectedUsers([]);
-    }
-  }, [isOpen]);
-
-  const fetchAvailableUsers = async () => {
+  const fetchAvailableUsers = useCallback(async () => {
     try {
       setLoadingUsers(true);
       const token = localStorage.getItem('token');
       const response = await axios.get('/api/people', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.data.success) {
         setAvailableUsers(response.data.users);
       }
@@ -37,7 +28,16 @@ const CreateOrganizationModal = ({ isOpen, onClose, onSuccess, addNotification }
     } finally {
       setLoadingUsers(false);
     }
-  };
+  }, [addNotification]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchAvailableUsers();
+      // Reset form when modal opens
+      setFormData({ name: '', description: '' });
+      setSelectedUsers([]);
+    }
+  }, [isOpen, fetchAvailableUsers]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -24,10 +24,16 @@ const Login = ({ onLogin, addNotification }) => {
 
     try {
       const response = await authAPI.login(formData);
-      
+
       if (response.data.success) {
         onLogin(response.data.token, response.data.user);
         addNotification(`Welcome back, ${response.data.user.name}!`, 'success');
+
+        // Navigate to dashboard after login
+        const dashboardUrl = response.data.user.role === 'admin' ? '/dashboard/admin' : '/dashboard/agent';
+        setTimeout(() => {
+          window.location.href = dashboardUrl;
+        }, 300);
       }
     } catch (error) {
       const errorMessage = apiUtils.getErrorMessage(error);

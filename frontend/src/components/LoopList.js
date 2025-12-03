@@ -128,7 +128,7 @@ const LoopList = ({ user, addNotification, filters = {} }) => {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, statusFilter, typeFilter, sortBy, sortOrder, closingThisMonth, archivedMode, reviewFilters, filters, addNotification, appliedStatusApi, appliedTypeApi, apiSortableFields]);
+  }, [searchTerm, sortBy, sortOrder, closingThisMonth, archivedMode, reviewFilters, filters, addNotification, appliedStatusApi, appliedTypeApi, apiSortableFields]);
 
   useEffect(() => {
     fetchLoops();

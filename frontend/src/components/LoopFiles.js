@@ -1,20 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { loopAPI, apiUtils } from '../services/api';
 
 const LoopFiles = ({ loopId, user, addNotification }) => {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
 
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     try {
       const res = await loopAPI.listDocuments(loopId);
       if (res.data.success) setFiles(res.data.documents);
     } catch (e) {
       console.error('Failed to load documents', e);
     }
-  };
+  }, [loopId]);
 
-  useEffect(() => { fetchFiles(); }, [loopId]);
+  useEffect(() => {
+    fetchFiles();
+  }, [fetchFiles]);
 
   const handleUpload = async (e) => {
     const selected = e.target.files;
