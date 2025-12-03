@@ -2873,6 +2873,8 @@ const SystemInformation = ({ addNotification }) => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
   useEffect(() => {
+    setLastUpdated(new Date());
+
     // Calculate uptime (simple simulation)
     const startTime = Date.now();
     const updateUptime = () => {
@@ -2885,11 +2887,7 @@ const SystemInformation = ({ addNotification }) => {
     };
 
     updateUptime();
-    setLastUpdated(new Date());
-    const interval = setInterval(() => {
-      updateUptime();
-      setLastUpdated(new Date());
-    }, 60000); // Update every minute
+    const interval = setInterval(updateUptime, 60000); // Update every minute
 
     return () => clearInterval(interval);
   }, []);
