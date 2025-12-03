@@ -60,6 +60,7 @@ const AppContent = () => {
     apiUtils.setAuth(token, userData);
     setIsAuthenticated(true);
     setUser(userData);
+    justLoggedInRef.current = true;
   };
 
   const handleLogout = () => {
