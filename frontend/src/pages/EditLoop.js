@@ -51,23 +51,6 @@ const EditLoop = ({ user, addNotification }) => {
     loadActivity();
   }, [id]);
 
-  const handleSubmit = async (formData) => {
-    setLoading(true);
-
-    try {
-      const response = await loopAPI.updateLoop(id, formData);
-      if (response.data.success) {
-        addNotification('Transaction loop updated successfully!', 'success');
-        fetchLoop();
-      }
-    } catch (error) {
-      const errorMessage = apiUtils.getErrorMessage(error);
-      addNotification(errorMessage, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDelete = async () => {
     if (!window.confirm('Are you sure you want to delete this loop? This action cannot be undone.')) {
       return;
