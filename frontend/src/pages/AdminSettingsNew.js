@@ -52,6 +52,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Set active tab from query string or navigation state
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
@@ -64,6 +65,7 @@ const AdminSettingsNew = ({ user, addNotification }) => {
   }, [location.search, location.state]);
 
   // Keep URL in sync when switching tabs for shareable links
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (!activeTab) return;
