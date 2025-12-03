@@ -2867,8 +2867,8 @@ const AppearanceSettings = ({ addNotification }) => {
 };
 
 const SystemInformation = ({ addNotification }) => {
-  const [systemStatus, setSystemStatus] = useState('Online');
-  const [systemVersion] = useState('v1.0.0');
+  const systemStatus = 'Online';
+  const systemVersion = 'v1.0.0';
   const [uptime, setUptime] = useState('0d 0h 0m');
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
