@@ -2882,11 +2882,14 @@ const SystemInformation = ({ addNotification }) => {
       const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
       setUptime(`${days}d ${hours}h ${minutes}m`);
-      setLastUpdated(new Date());
     };
 
     updateUptime();
-    const interval = setInterval(updateUptime, 60000); // Update every minute
+    setLastUpdated(new Date());
+    const interval = setInterval(() => {
+      updateUptime();
+      setLastUpdated(new Date());
+    }, 60000); // Update every minute
 
     return () => clearInterval(interval);
   }, []);
