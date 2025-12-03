@@ -10,7 +10,6 @@ import { dateUtils } from '../utils/dateUtils';
 
 const EditLoop = ({ user, addNotification }) => {
   const [loop, setLoop] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [activity, setActivity] = useState([]);
   const [activeTab, setActiveTab] = useState('documents'); // documents | tasks | people | details | activity | notifications
