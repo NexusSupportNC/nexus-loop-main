@@ -37,13 +37,16 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid — clear and redirect once
+      console.warn('❌ 401 Unauthorized:', error.response?.data);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       if (window.location.pathname !== '/login') {
+        console.log('🔄 Redirecting to login...');
         window.location.href = '/login';
       }
     } else if (error.response?.status === 403 && error.response?.data?.suspended) {
       // User account suspended
+      console.warn('❌ Account suspended');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       if (window.location.pathname !== '/login') {
