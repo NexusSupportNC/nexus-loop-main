@@ -8,6 +8,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const peopleRoutes = require('./routes/peopleRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
 const errorHandler = require('./middleware/errorHandler');
+const { initializeAdminPassword } = require('./setup/initialize-admin');
 
 const app = express();
 
