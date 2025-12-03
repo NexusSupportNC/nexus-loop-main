@@ -24,6 +24,7 @@ const AppContent = () => {
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const justLoggedInRef = useRef(false);
   const { notifications, removeNotification, addNotification } = useNotifications();
 
   useEffect(() => {
