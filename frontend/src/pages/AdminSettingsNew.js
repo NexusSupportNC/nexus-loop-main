@@ -50,33 +50,35 @@ const AdminSettingsNew = ({ user, addNotification }) => {
     return (location.state && location.state.tab) ? location.state.tab : (params.get('tab') || 'system');
   })();
   const [activeTab, setActiveTab] = useState(initialTab);
+  const lastSyncedTabRef = useRef(null);
 
   // Set active tab from query string or navigation state
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabParam = params.get('tab');
     const stateTab = location.state && location.state.tab ? location.state.tab : null;
     const next = stateTab || tabParam;
-    if (next && next !== activeTab) {
+    if (next && next !== activeTab && next !== lastSyncedTabRef.current) {
       setActiveTab(next);
+      lastSyncedTabRef.current = next;
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
-  }, [location.search, location.state]);
+  }, [location.search, location.state, activeTab]);
 
   // Keep URL in sync when switching tabs for shareable links
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (!activeTab || activeTab === lastSyncedTabRef.current) return;
+
     const params = new URLSearchParams(location.search);
-    if (!activeTab) return;
     params.set('tab', activeTab);
     const newSearch = params.toString();
     const currentSearch = location.search.replace(/^\?/, '');
     if (newSearch !== currentSearch) {
+      lastSyncedTabRef.current = activeTab;
       navigate({ search: newSearch }, { replace: true });
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
-  }, [activeTab, location.search]);
+  }, [activeTab, location.search, navigate]);
 
   // Tab configuration
   const tabs = [
